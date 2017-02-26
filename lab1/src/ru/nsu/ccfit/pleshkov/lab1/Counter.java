@@ -1,6 +1,7 @@
 package ru.nsu.ccfit.pleshkov.lab1;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -9,13 +10,8 @@ import java.util.Map;
 
 public class Counter {
     private HashMap<Filter, Integer> filters;
-    public Counter(ArrayList<Filter> fil) {
-        filters = new HashMap<Filter, Integer>();
-        for(Filter filter : fil) {
-            filters.put(filter,0);
-        }
-    }
-    public void count(FileIterator files) {
+    private FileIterator files;
+    public void count() {
         for (Path file : files.files) {
             for (Map.Entry<Filter, Integer> entry : filters.entrySet()) {
                 if (entry.getKey().isFit(file)) {
@@ -37,5 +33,13 @@ public class Counter {
         for (Map.Entry<Filter, Integer> entry : filters.entrySet()) {
             System.out.println(entry.getValue());
         }
+    }
+    public Counter(String dir, String config) throws FileNotFoundException {
+        filters = new HashMap<>();
+        StandardConfigParser parser = new StandardConfigParser();
+        for(Filter fil : parser.parse(config)) {
+            filters.put(fil,0);
+        }
+        files = new FileIterator(dir);
     }
 }
