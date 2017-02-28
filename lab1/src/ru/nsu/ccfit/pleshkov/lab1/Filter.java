@@ -4,4 +4,5 @@ import java.nio.file.Path;
 
 public interface Filter {
     boolean isFit(Path file);
+    String getParam();
 }

@@ -1,29 +1,19 @@
-<project>
+<project default="do">
 
     <presetdef name="javac">
         <javac includeantruntime="false" />
     </presetdef>
 
-    <target name="clean">
+    <target name="do">
         <delete dir="build"/>
-    </target>
-
-    <target name="compile">
+        <delete file="LoC.jar"/>
         <mkdir dir="build/classes"/>
         <javac srcdir="src" destdir="build/classes"/>
-    </target>
-
-    <target name="jar">
-        <mkdir dir="build/jar"/>
-        <jar destfile="build/jar/lab1pleshkov.jar" basedir="build/classes">
+        <jar destfile="LoC.jar" basedir="build/classes">
             <manifest>
                 <attribute name="Main-Class" value="ru.nsu.ccfit.pleshkov.lab1.Main"/>
             </manifest>
         </jar>
-    </target>
-
-    <target name="run">
-        <java jar="build/jar/lab1pleshkov.jar" fork="true"/>
     </target>
 
 </project>

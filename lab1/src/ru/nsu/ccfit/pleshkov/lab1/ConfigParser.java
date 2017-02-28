@@ -1,7 +1,6 @@
 package ru.nsu.ccfit.pleshkov.lab1;
 
 import java.io.FileNotFoundException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 
 public interface ConfigParser {

@@ -4,13 +4,14 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
 public class StandardConfigParser implements ConfigParser {
     private HashSet<Character> set;
     private FilterFactory factory;
+
+    @Override
     public ArrayList<Filter> parse(String path) throws FileNotFoundException {
         if(!Files.isRegularFile(Paths.get(path))) {
             throw new FileNotFoundException();
@@ -27,7 +28,7 @@ public class StandardConfigParser implements ConfigParser {
                     try {
                         list.add(factory.make(line));
                     } catch (Exception ex) {
-                        ex.printStackTrace();
+                        ex.getCause().printStackTrace();
                     }
                 } else {
                     throw new BadInput();
