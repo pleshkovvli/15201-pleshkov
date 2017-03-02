@@ -9,7 +9,6 @@ import java.util.*;
 
 public class StandardConfigParser implements ConfigParser {
     private HashSet<Character> set;
-    private FilterFactory factory;
 
     @Override
     public ArrayList<Filter> parse(String path) throws FileNotFoundException {
@@ -26,7 +25,7 @@ public class StandardConfigParser implements ConfigParser {
                 }
                 if(set.contains(line.charAt(0))) {
                     try {
-                        list.add(factory.make(line));
+                        list.add(FilterFactory.make(line));
                     } catch (Exception ex) {
                         ex.getCause().printStackTrace();
                     }
@@ -42,7 +41,6 @@ public class StandardConfigParser implements ConfigParser {
 
     public StandardConfigParser() {
         set = new HashSet<Character>();
-        factory = new FilterFactory();
-        set.addAll(factory.getKeys());
+        set.addAll(FilterFactory.getKeys());
     }
 }

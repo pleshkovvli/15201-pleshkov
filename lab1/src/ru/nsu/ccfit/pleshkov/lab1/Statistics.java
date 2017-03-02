@@ -1,7 +1,6 @@
 package ru.nsu.ccfit.pleshkov.lab1;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class Statistics {
     private HashMap<Filter, Stats> stats;
@@ -13,7 +12,9 @@ public class Statistics {
         System.out.println("Directory: " + directory);
         System.out.println("Configuration: " + configInfo);
         System.out.println("Tolal: " + total.lines + " lines in " + total.files + " files.");
-        for (Map.Entry<Filter, Stats> entry : stats.entrySet()) {
+        SortedSet<Map.Entry<Filter, Stats> > sortedSet = new TreeSet<>(new Statistics.MyComapator());
+        sortedSet.addAll(stats.entrySet());
+        for (Map.Entry<Filter, Stats> entry : sortedSet) {
             System.out.println(entry.getKey().getParam() +" : "
                     + entry.getValue().lines + " lines in "
                     + entry.getValue().files + " files.");
@@ -27,4 +28,24 @@ public class Statistics {
         total = ttl;
     }
 
+    static public int getLines(Map.Entry<Filter, Stats> stats) {
+        return stats.getValue().lines;
+    }
+
+    class MyComapator implements Comparator<Map.Entry<Filter, Stats> > {
+        @Override
+        public int compare(Map.Entry<Filter, Stats> first, Map.Entry<Filter, Stats> second) {
+            if(first.getValue().files < second.getValue().files) {
+                return -1;
+            } else if (first.getValue().files > second.getValue().files) {
+                return 1;
+            } else if(first.getValue().lines < second.getValue().lines) {
+                return -1;
+            } else if (first.getValue().lines > second.getValue().lines) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
 }
