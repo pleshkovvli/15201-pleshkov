@@ -24,15 +24,9 @@ public class FileModificationTimeFilter implements Filter {
         return param + (modificationTime/1000);
     }
 
-    public FileModificationTimeFilter(String time) {
-        if(time.charAt(0)=='>') {
-            isLess = false;
-        } else if (time.charAt(0)=='<') {
-            isLess = true;
-        } else {
-            throw new IllegalArgumentException();
-        }
-        modificationTime = Long.valueOf(time.substring(1)).longValue() * 1000;
+    public FileModificationTimeFilter(boolean isLess, long modificationTime) {
+        this.isLess = isLess;
+        this.modificationTime = modificationTime;
     }
 
 }

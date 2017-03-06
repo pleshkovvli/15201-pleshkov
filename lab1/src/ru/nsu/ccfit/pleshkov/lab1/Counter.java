@@ -40,12 +40,12 @@ public class Counter {
                     ex.printStackTrace();
                     continue;
                 }
-                entry.getValue().lines += lines;
-                entry.getValue().files ++;
+                entry.getValue().setLines(entry.getValue().getLines() + lines);
+                entry.getValue().setFiles(entry.getValue().getFiles() + 1);
                 if(!isCounted) {
                     isCounted = true;
-                    total.lines += lines;
-                    total.files ++;
+                    total.setLines(total.getLines() + lines);
+                    total.setFiles(total.getFiles() + 1);
                 }
             }
         }

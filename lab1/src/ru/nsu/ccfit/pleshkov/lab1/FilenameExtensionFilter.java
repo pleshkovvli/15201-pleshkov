@@ -21,11 +21,6 @@ public class FilenameExtensionFilter implements Filter {
     }
 
     public FilenameExtensionFilter(String ext) {
-        if(ext.charAt(0)!='.') {
-            throw new IllegalArgumentException();
-        }
         extension = ext;
     }
-
-
 }

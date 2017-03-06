@@ -12,13 +12,10 @@ abstract public class AggregateFilter implements Filter {
                 + " " + secondFilter.getParam() + ")";
     }
 
-    public AggregateFilter(String agrFilter) throws ClassNotFoundException,InstantiationException,
+    public AggregateFilter(Filter firstFilter, Filter secondFilter, char sym) throws ClassNotFoundException,InstantiationException,
     IllegalAccessException,NoSuchMethodException, InvocationTargetException {
-        symbol = agrFilter.charAt(0);
-        if(agrFilter.charAt(1)!='(' || agrFilter.charAt(agrFilter.length()-1)!=')') {
-            throw new IllegalArgumentException();
-        }
-        firstFilter = FilterFactory.make(agrFilter.substring(2,agrFilter.indexOf(" ")));
-        secondFilter = FilterFactory.make(agrFilter.substring(agrFilter.indexOf(" ") + 1,agrFilter.length()-1));
+        this.symbol = sym;
+        this.firstFilter = firstFilter;
+        this.secondFilter = secondFilter;
     }
 }

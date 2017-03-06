@@ -5,27 +5,40 @@ import java.util.HashMap;
 import java.util.Set;
 
 public class FilterFactory {
-    static private HashMap<Character, String> map;
+    static private HashMap<Character, Pair> map;
 
     static {
         map = new HashMap<>();
-        map.put('.',"ru.nsu.ccfit.pleshkov.lab1.FilenameExtensionFilter");
-        map.put('>',"ru.nsu.ccfit.pleshkov.lab1.FileModificationTimeFilter");
-        map.put('<',"ru.nsu.ccfit.pleshkov.lab1.FileModificationTimeFilter");
-        map.put('!',"ru.nsu.ccfit.pleshkov.lab1.NotFilter");
-        map.put('&',"ru.nsu.ccfit.pleshkov.lab1.AndFilter");
-        map.put('|',"ru.nsu.ccfit.pleshkov.lab1.OrFilter");
+        map.put('.', new Pair("ru.nsu.ccfit.pleshkov.lab1.FilenameExtensionFilterSerializer", null));
+        map.put('>', new Pair("ru.nsu.ccfit.pleshkov.lab1.FileModificationTimeFilterSerializer", null));
+        map.put('<', new Pair("ru.nsu.ccfit.pleshkov.lab1.FileModificationTimeFilterSerializer", null));
+        map.put('!', new Pair("ru.nsu.ccfit.pleshkov.lab1.NotFilterSerializer", null));
+        map.put('&', new Pair("ru.nsu.ccfit.pleshkov.lab1.AndFilterSerializer", null));
+        map.put('|', new Pair("ru.nsu.ccfit.pleshkov.lab1.OrFilterSerializer", null));
     }
 
     static public Filter make(String s) throws ClassNotFoundException,InstantiationException,
             IllegalAccessException,NoSuchMethodException, InvocationTargetException {
-        Class c = Class.forName(map.get(s.charAt(0)));
-        Class params[] = {String.class};
-        return ((Filter) c.getConstructor(params).newInstance(s));
+        Serializer seria =  getSerializer(s.charAt(0));
+        Filter filter = seria.make(s);
+        return filter;
+    }
+
+    static private synchronized Serializer getSerializer(char key) throws ClassNotFoundException, NoSuchMethodException,
+    InstantiationException, IllegalAccessException, InvocationTargetException {
+        Pair pair = map.get(key);
+        if(pair==null) {
+            throw new IllegalArgumentException();
+        }
+        if(pair.getSerializer()==null) {
+            map.get(key).setSerializer(
+                    (Serializer) Class.forName(pair.getClassName()).getConstructor().newInstance());
+        }
+        return map.get(key).getSerializer();
     }
 
     static public void addFilter(char c, String className) {
-        map.put(c,className);
+        map.put(c, new Pair(className,null));
     }
 
     static public Set<Character> getKeys() {

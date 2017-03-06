@@ -16,13 +16,8 @@ public class NotFilter implements Filter {
         return "!(" + filter.getParam() + ")";
     }
 
-    public NotFilter(String notFilter) throws ClassNotFoundException,InstantiationException,
+    public NotFilter(Filter filter) throws ClassNotFoundException,InstantiationException,
             IllegalAccessException,NoSuchMethodException, InvocationTargetException {
-        if(notFilter.charAt(0)!='!'
-                || notFilter.charAt(1)!='('
-                || notFilter.charAt(notFilter.length()-1)!=')') {
-            throw new IllegalArgumentException();
-        }
-        filter = FilterFactory.make(notFilter.substring(2,notFilter.length()-1));
+        this.filter = filter;
     }
 }

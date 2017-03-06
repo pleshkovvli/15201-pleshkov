@@ -11,7 +11,7 @@ public class Main {
         }
         try {
             Counter counter = new Counter();
-            Statistics statistics = counter.count(args[0],args[1]);
+            StatisticsHandler statistics = new StatisticsHandler(counter.count(args[0],args[1]));
             statistics.printStats();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
