@@ -3,6 +3,7 @@ package ru.nsu.ccfit.pleshkov.lab1;
 import java.util.*;
 
 public class Statistics {
+
     public HashMap<Filter, Stats> getStats() {
         return stats;
     }
@@ -27,15 +28,15 @@ public class Statistics {
 
     private String configInfo;
 
-
     public Statistics(HashMap<Filter, Stats> map, Stats ttl, String dir, String config) {
         stats = new HashMap<>(map);
         directory = dir;
         configInfo = config;
         total = ttl;
+
     }
 
-    static public int getLines(Map.Entry<Filter, Stats> stats) {
+    public int getLines(Map.Entry<Filter, Stats> stats) {
         return stats.getValue().getLines();
     }
 }

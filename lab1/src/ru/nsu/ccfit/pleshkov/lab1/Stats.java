@@ -20,4 +20,14 @@ public class Stats {
     public void setFiles(int files) {
         this.files = files;
     }
+
+    Stats(int lines, int files) {
+        this.lines = lines;
+        this.files = files;
+    }
+
+    Stats() {
+        lines = 0;
+        files = 0;
+    }
 }

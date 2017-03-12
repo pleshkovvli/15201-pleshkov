@@ -1,43 +1,52 @@
 package ru.nsu.ccfit.pleshkov.lab1;
 
-import java.util.Comparator;
-import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 public class StatisticsHandler {
-    private Statistics stats;
 
-    public void printStats() {
-        System.out.println("Directory: " + stats.getDirectory());
-        System.out.println("Configuration: " + stats.getConfigInfo());
-        System.out.println("Total: " + stats.getTotal().getLines() + " lines in " + stats.getTotal().getFiles() + " files.");
-        SortedSet<Map.Entry<Filter, Stats> > sortedSet = new TreeSet<>(new StatisticsHandler.MyComapator());
+    static public void printStats(Statistics stats) {
+        System.out.println("Directory     — " + stats.getDirectory());
+        System.out.println("Configuration — " + stats.getConfigInfo());
+        System.out.println("Total — " + stats.getTotal().getLines() + " lines in " + stats.getTotal().getFiles() + " files.");
+        TreeSet<Map.Entry<Filter, Stats> > sortedSet = new TreeSet<>(new StatsComapator());
         sortedSet.addAll(stats.getStats().entrySet());
+        int maxFilter = 0;
+        int maxLines = 0;
+        int maxFiles = 0;
         for (Map.Entry<Filter, Stats> entry : sortedSet) {
-            System.out.println(entry.getKey().getParam() +" : "
-                    + entry.getValue().getLines() + " lines in "
-                    + entry.getValue().getFiles() + " files.");
+            maxFilter = Math.max(entry.getKey().getParam().length(),maxFilter);
+            maxLines = Math.max(entry.getValue().getLines(),maxLines);
+            maxFiles = Math.max(entry.getValue().getFiles(),maxFiles);
+        }
+        String format = "%-" + maxFilter + "s — %-" + String.valueOf(maxLines).length() +
+                "d lines in %-" + String.valueOf(maxFiles).length() +"d files.\n";
+        char[] array = new char[maxFilter+1];
+        Arrays.fill(array,'—');
+        System.out.println(array);
+        for (Map.Entry<Filter, Stats> entry : sortedSet.descendingSet()) {
+            if(entry.getValue().getLines()>0) {
+                System.out.format(format, entry.getKey().getParam(),
+                        entry.getValue().getLines(), entry.getValue().getFiles());
+            }
         }
     }
 
-    public StatisticsHandler(Statistics stat) {
-        stats = stat;
+    public StatisticsHandler() {
     }
 
-    class MyComapator implements Comparator<Map.Entry<Filter, Stats> > {
+    static class StatsComapator implements Comparator<Map.Entry<Filter, Stats> > {
         @Override
         public int compare(Map.Entry<Filter, Stats> first, Map.Entry<Filter, Stats> second) {
-            if(first.getValue().getFiles() < second.getValue().getFiles()) {
+            if(first.getValue().getLines() < second.getValue().getLines()) {
                 return -1;
-            } else if (first.getValue().getFiles() > second.getValue().getFiles()) {
+            } else if(first.getValue().getLines() > second.getValue().getLines()) {
                 return 1;
-            } else if(first.getValue().getLines() < second.getValue().getLines()) {
+            } else if(first.getValue().getFiles() < second.getValue().getFiles()) {
                 return -1;
-            } else if (first.getValue().getLines() > second.getValue().getLines()) {
+            } else if(first.getValue().getFiles() > second.getValue().getFiles()) {
                 return 1;
             } else {
-                return 1;
+                return String.CASE_INSENSITIVE_ORDER.compare(first.getKey().getParam(),second.getKey().getParam());
             }
         }
     }

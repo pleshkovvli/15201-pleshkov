@@ -16,8 +16,7 @@ public class NotFilter implements Filter {
         return "!(" + filter.getParam() + ")";
     }
 
-    public NotFilter(Filter filter) throws ClassNotFoundException,InstantiationException,
-            IllegalAccessException,NoSuchMethodException, InvocationTargetException {
+    public NotFilter(Filter filter) {
         this.filter = filter;
     }
 }

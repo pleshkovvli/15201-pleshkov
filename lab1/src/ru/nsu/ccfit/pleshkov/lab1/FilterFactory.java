@@ -17,11 +17,14 @@ public class FilterFactory {
         map.put('|', new Pair("ru.nsu.ccfit.pleshkov.lab1.OrFilterSerializer", null));
     }
 
-    static public Filter make(String s) throws ClassNotFoundException,InstantiationException,
-            IllegalAccessException,NoSuchMethodException, InvocationTargetException {
-        Serializer seria =  getSerializer(s.charAt(0));
-        Filter filter = seria.make(s);
-        return filter;
+    static public Filter make(String s) throws ParseException {
+        try {
+            Serializer seria = getSerializer(s.charAt(0));
+            Filter filter = seria.make(s);
+            return filter;
+        } catch (Exception e) {
+            throw new ParseException();
+        }
     }
 
     static private synchronized Serializer getSerializer(char key) throws ClassNotFoundException, NoSuchMethodException,

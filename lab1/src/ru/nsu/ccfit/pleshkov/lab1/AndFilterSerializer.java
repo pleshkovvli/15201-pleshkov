@@ -7,8 +7,7 @@ public class AndFilterSerializer extends AggregateFilterSerializer {
         return (first=='&');
     }
 
-    protected AndFilter doMake(Filter firstFilter, Filter secondFilter) throws ClassNotFoundException,
-            IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+    protected AndFilter doMake(Filter firstFilter, Filter secondFilter) {
         return new AndFilter(firstFilter, secondFilter);
     }
 }

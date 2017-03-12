@@ -1,7 +1,5 @@
 package ru.nsu.ccfit.pleshkov.lab1;
 
-import java.io.FileNotFoundException;
-
 public class Main {
 
     public static void main(String[] args) {
@@ -11,10 +9,11 @@ public class Main {
         }
         try {
             Counter counter = new Counter();
-            StatisticsHandler statistics = new StatisticsHandler(counter.count(args[0],args[1]));
-            statistics.printStats();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            StatisticsHandler.printStats(counter.count(args[0],args[1]));
+        } catch (Lab1Exception e) {
+            System.out.println(e.getMessage());
+        } catch (Exception e) {
+            System.out.println("!" + e.getMessage());
         }
     }
 }

@@ -10,8 +10,7 @@ public class AndFilter extends AggregateFilter {
         return (firstFilter.isFit(file) && secondFilter.isFit(file));
     }
 
-    public AndFilter(Filter firstFilter, Filter secondFilter) throws ClassNotFoundException,InstantiationException,
-            IllegalAccessException,NoSuchMethodException, InvocationTargetException {
+    public AndFilter(Filter firstFilter, Filter secondFilter) {
         super(firstFilter,secondFilter,'&');
     }
 }

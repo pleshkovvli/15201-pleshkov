@@ -3,6 +3,7 @@ package ru.nsu.ccfit.pleshkov.lab1;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -11,18 +12,24 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 public class Counter {
-    private HashMap<Filter, Stats> filters = new HashMap<>();
-    private Stats total = new Stats();
+    private HashMap<Filter, Stats> filters;
+    private Stats total;
 
-    public Statistics count(String config,String dir) throws FileNotFoundException {
+    public Statistics count(String config, String dir) throws Lab1Exception {
+        filters = new HashMap<>();
+        total = new Stats();
         StandardConfigParser parser = new StandardConfigParser();
         for(Filter fil : parser.parse(config)) {
             filters.put(fil, new Stats());
         }
-        try (Stream<Path> paths = Files.walk(Paths.get(dir)).filter(Files::isRegularFile)) {
+        Path directory;
+        directory = Paths.get(dir);
+        try (Stream<Path> paths = Files.walk(directory).filter(Files::isRegularFile)) {
             paths.forEach(this::action);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            throw new CountException();
+        } catch (Lab1RuntimeException e) {
+            throw new CountException(e);
         }
         return new Statistics(filters,total,dir,config);
     }
@@ -36,9 +43,10 @@ public class Counter {
                     while (reader.readLine() != null) {
                         lines++;
                     }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    continue;
+                } catch (FileNotFoundException ex) {
+                    throw new Lab1RuntimeException(ex);
+                } catch (IOException e) {
+                    throw new Lab1RuntimeException(e);
                 }
                 entry.getValue().setLines(entry.getValue().getLines() + lines);
                 entry.getValue().setFiles(entry.getValue().getFiles() + 1);

@@ -10,8 +10,7 @@ public class OrFilter extends AggregateFilter {
         return (firstFilter.isFit(file) || secondFilter.isFit(file));
     }
 
-    public OrFilter(Filter firstFilter, Filter secondFilter) throws ClassNotFoundException,InstantiationException,
-            IllegalAccessException,NoSuchMethodException, InvocationTargetException {
+    public OrFilter(Filter firstFilter, Filter secondFilter)  {
         super(firstFilter,secondFilter,'|');
     }
 }

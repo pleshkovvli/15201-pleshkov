@@ -12,8 +12,7 @@ abstract public class AggregateFilter implements Filter {
                 + " " + secondFilter.getParam() + ")";
     }
 
-    public AggregateFilter(Filter firstFilter, Filter secondFilter, char sym) throws ClassNotFoundException,InstantiationException,
-    IllegalAccessException,NoSuchMethodException, InvocationTargetException {
+    public AggregateFilter(Filter firstFilter, Filter secondFilter, char sym) {
         this.symbol = sym;
         this.firstFilter = firstFilter;
         this.secondFilter = secondFilter;
