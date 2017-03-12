@@ -30,4 +30,8 @@ public class Stats {
         lines = 0;
         files = 0;
     }
+
+    public boolean equals(Stats stats) {
+        return (stats.getFiles()==files) && (stats.getLines()==lines);
+    }
 }

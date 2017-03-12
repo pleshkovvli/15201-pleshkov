@@ -4,16 +4,15 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Stream;
 
 public class Counter {
     private HashMap<Filter, Stats> filters;
     private Stats total;
+    String th;
 
     public Statistics count(String config, String dir) throws Lab1Exception {
         filters = new HashMap<>();
@@ -24,17 +23,34 @@ public class Counter {
         }
         Path directory;
         directory = Paths.get(dir);
-        try (Stream<Path> paths = Files.walk(directory).filter(Files::isRegularFile)) {
-            paths.forEach(this::action);
+        FileVisitor<Path> fv = new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                    throws IOException {
+                try {
+                    action(file);
+                } catch (Lab1RuntimeException e) {
+                    System.out.println(e.getMessage());
+                }
+                return FileVisitResult.CONTINUE;
+            }
+            @Override
+            public FileVisitResult visitFileFailed(Path file, IOException io) {
+                return FileVisitResult.SKIP_SUBTREE;
+            }
+        };
+
+        try {
+            Files.walkFileTree(directory, fv);
         } catch (IOException e) {
-            throw new CountException();
-        } catch (Lab1RuntimeException e) {
-            throw new CountException(e);
+            System.out.println(e.getMessage());
         }
+
         return new Statistics(filters,total,dir,config);
     }
 
     private void action(Path file) {
+        th = file.toString();
         boolean isCounted = false;
         for (Map.Entry<Filter, Stats> entry : filters.entrySet()) {
             if (entry.getKey().isFit(file)) {
@@ -43,9 +59,7 @@ public class Counter {
                     while (reader.readLine() != null) {
                         lines++;
                     }
-                } catch (FileNotFoundException ex) {
-                    throw new Lab1RuntimeException(ex);
-                } catch (IOException e) {
+                }  catch (IOException e) {
                     throw new Lab1RuntimeException(e);
                 }
                 entry.getValue().setLines(entry.getValue().getLines() + lines);
