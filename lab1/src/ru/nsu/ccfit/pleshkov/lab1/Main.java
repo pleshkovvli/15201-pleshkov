@@ -3,8 +3,8 @@ package ru.nsu.ccfit.pleshkov.lab1;
 public class Main {
 
     public static void main(String[] args) {
-        if(args.length < 2) {
-            System.out.println("Usage: LoC.jar <path to congif file> <directory>");
+        if(args.length != 2) {
+            System.out.println("Usage: java -jar LoC.jar <path to congif file> <directory>");
             System.exit(0);
         }
         try {
@@ -13,8 +13,7 @@ public class Main {
         } catch (Lab1Exception e) {
             System.out.println(e.getMessage());
         } catch (Exception e) {
-            System.out.println("!" + e.getMessage());
-            e.printStackTrace();
+            System.out.println("Fatal error: " + e.getMessage());
         }
     }
 }

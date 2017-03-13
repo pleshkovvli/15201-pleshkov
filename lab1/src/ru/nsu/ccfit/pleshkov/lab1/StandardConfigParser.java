@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-public class StandardConfigParser implements ConfigParser {
+class StandardConfigParser implements ConfigParser {
     private HashSet<Character> set = new HashSet<Character>();
 
     @Override
@@ -46,6 +46,8 @@ public class StandardConfigParser implements ConfigParser {
                     } catch (ParseException ex) {
                         throw new ParseException(ex.getMessage() + line);
                     }
+                } else {
+                    throw new ParseException("Unknown filter: " + line);
                 }
             }
         } catch (FileNotFoundException ex) {

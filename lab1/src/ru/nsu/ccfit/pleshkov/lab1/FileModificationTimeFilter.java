@@ -2,7 +2,7 @@ package ru.nsu.ccfit.pleshkov.lab1;
 
 import java.nio.file.Path;
 
-public class FileModificationTimeFilter implements Filter {
+class FileModificationTimeFilter implements Filter {
 
     private long modificationTime;
     private boolean isLess;
@@ -24,7 +24,7 @@ public class FileModificationTimeFilter implements Filter {
         return param + (modificationTime/1000);
     }
 
-    public FileModificationTimeFilter(boolean isLess, long modificationTime) {
+    FileModificationTimeFilter(boolean isLess, long modificationTime) {
         this.isLess = isLess;
         this.modificationTime = modificationTime;
     }

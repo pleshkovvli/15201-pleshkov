@@ -2,7 +2,7 @@ package ru.nsu.ccfit.pleshkov.lab1;
 
 import java.lang.reflect.InvocationTargetException;
 
-public class AndFilterSerializer extends AggregateFilterSerializer {
+class AndFilterSerializer extends AggregateFilterSerializer {
     protected boolean checkType(char first) {
         return (first=='&');
     }

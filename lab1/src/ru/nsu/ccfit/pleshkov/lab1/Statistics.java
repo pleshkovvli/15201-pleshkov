@@ -35,8 +35,4 @@ public class Statistics {
         total = ttl;
 
     }
-
-    public int getLines(Map.Entry<Filter, Stats> stats) {
-        return stats.getValue().getLines();
-    }
 }

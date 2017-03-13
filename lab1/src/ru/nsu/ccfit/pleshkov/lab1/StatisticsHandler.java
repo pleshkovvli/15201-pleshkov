@@ -5,10 +5,22 @@ import java.util.*;
 public class StatisticsHandler {
 
     static public void printStats(Statistics stats) {
+        if(stats==null) {
+            System.out.println("Null stat!");
+            return;
+        }
         System.out.println("Directory     — " + stats.getDirectory());
         System.out.println("Configuration — " + stats.getConfigInfo());
-        System.out.println("Total — " + stats.getTotal().getLines() + " lines in " + stats.getTotal().getFiles() + " files.");
-        TreeSet<Map.Entry<Filter, Stats> > sortedSet = new TreeSet<>(new StatsComapator());
+        if(stats.getTotal()==null) {
+            System.out.println("Null total!");
+        } else {
+            System.out.println("Total — " + stats.getTotal().getLines() + " lines in " + stats.getTotal().getFiles() + " files.");
+        }
+        if(stats.getStats()==null) {
+            System.out.println("Empty stats!");
+            return;
+        }
+        TreeSet<Map.Entry<Filter, Stats> > sortedSet = new TreeSet<>(new StatsComparator());
         sortedSet.addAll(stats.getStats().entrySet());
         int maxFilter = 0;
         int maxLines = 0;
@@ -34,7 +46,7 @@ public class StatisticsHandler {
     public StatisticsHandler() {
     }
 
-    static class StatsComapator implements Comparator<Map.Entry<Filter, Stats> > {
+    static private class StatsComparator implements Comparator<Map.Entry<Filter, Stats> > {
         @Override
         public int compare(Map.Entry<Filter, Stats> first, Map.Entry<Filter, Stats> second) {
             if(first.getValue().getLines() < second.getValue().getLines()) {

@@ -1,9 +1,8 @@
 package ru.nsu.ccfit.pleshkov.lab1;
 
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 
-public class NotFilter implements Filter {
+class NotFilter implements Filter {
     private Filter filter;
 
     @Override

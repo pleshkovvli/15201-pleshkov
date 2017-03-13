@@ -23,6 +23,8 @@ public class FilterFactory {
             Filter filter = seria.make(s);
             return filter;
         } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println(e.getMessage());
             throw new ParseException();
         }
     }
@@ -35,7 +37,7 @@ public class FilterFactory {
         }
         if(pair.getSerializer()==null) {
             map.get(key).setSerializer(
-                    (Serializer) Class.forName(pair.getClassName()).getConstructor().newInstance());
+                    (Serializer) Class.forName(pair.getClassName()).getDeclaredConstructor().newInstance());
         }
         return map.get(key).getSerializer();
     }

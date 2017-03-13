@@ -1,9 +1,14 @@
 package ru.nsu.ccfit.pleshkov.lab1;
 
 public class Lab1RuntimeException extends RuntimeException {
-    Lab1RuntimeException(Exception e) {
-        super(e);
+    private String message;
+
+    @Override
+    public String getMessage() {
+        return message;
     }
 
-    Lab1RuntimeException() {}
+    Lab1RuntimeException(String s) {
+        message = s;
+    }
 }

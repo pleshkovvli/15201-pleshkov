@@ -1,8 +1,6 @@
 package ru.nsu.ccfit.pleshkov.lab1;
 
-import java.lang.reflect.InvocationTargetException;
-
-public class OrFilterSerializer extends AggregateFilterSerializer {
+class OrFilterSerializer extends AggregateFilterSerializer {
     protected boolean checkType(char first) {
         return (first=='|');
     }

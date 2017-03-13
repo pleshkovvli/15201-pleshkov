@@ -1,7 +1,7 @@
 package ru.nsu.ccfit.pleshkov.lab1;
 
-public class Pair {
-    public String getClassName() {
+class Pair {
+    String getClassName() {
         return className;
     }
 
@@ -11,17 +11,17 @@ public class Pair {
 
     private String className;
 
-    public Serializer getSerializer() {
+    Serializer getSerializer() {
         return serializer;
     }
 
-    public void setSerializer(Serializer serializer) {
+    void setSerializer(Serializer serializer) {
         this.serializer = serializer;
     }
 
     private Serializer serializer;
 
-    public Pair(String className, Serializer serializer) {
+    Pair(String className, Serializer serializer) {
         this.className = className;
         this.serializer = serializer;
     }

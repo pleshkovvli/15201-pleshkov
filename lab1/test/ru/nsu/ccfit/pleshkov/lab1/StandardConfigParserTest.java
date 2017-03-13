@@ -3,6 +3,7 @@ package ru.nsu.ccfit.pleshkov.lab1;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 
 import static org.junit.Assert.*;
@@ -45,6 +46,23 @@ public class StandardConfigParserTest {
                 System.out.println(entry.getParam());
                 Assert.fail();
             }
+        }
+    }
+
+    @Test
+    public void hardParse() {
+        Filter one = new AndFilter(new NotFilter(new OrFilter(new NotFilter(new FileModificationTimeFilter(false,2323*1000)),
+                new FilenameExtensionFilter(".ui"))), new FileModificationTimeFilter(true,56*1000));
+        StandardConfigParser parser = new StandardConfigParser();
+        try {
+            ArrayList<Filter> filters = parser.parse("testexamples/config8");
+            if(filters.size()!=1) {
+                Assert.fail();
+            }
+            Assert.assertTrue(one.equals(filters.get(0)));
+        } catch (Lab1Exception e) {
+            e.printStackTrace();
+            Assert.fail();
         }
     }
 

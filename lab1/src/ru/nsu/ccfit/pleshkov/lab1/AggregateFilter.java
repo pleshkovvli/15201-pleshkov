@@ -2,9 +2,9 @@ package ru.nsu.ccfit.pleshkov.lab1;
 
 import java.lang.reflect.InvocationTargetException;
 
-abstract public class AggregateFilter implements Filter {
-    protected Filter firstFilter, secondFilter;
-    protected char symbol;
+abstract class AggregateFilter implements Filter {
+    Filter firstFilter, secondFilter;
+    char symbol;
 
     @Override
     public String getParam() {
@@ -12,7 +12,7 @@ abstract public class AggregateFilter implements Filter {
                 + " " + secondFilter.getParam() + ")";
     }
 
-    public AggregateFilter(Filter firstFilter, Filter secondFilter, char sym) {
+    AggregateFilter(Filter firstFilter, Filter secondFilter, char sym) {
         this.symbol = sym;
         this.firstFilter = firstFilter;
         this.secondFilter = secondFilter;

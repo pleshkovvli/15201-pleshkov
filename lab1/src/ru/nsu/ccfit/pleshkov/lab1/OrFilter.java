@@ -1,16 +1,15 @@
 package ru.nsu.ccfit.pleshkov.lab1;
 
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 
-public class OrFilter extends AggregateFilter {
+class OrFilter extends AggregateFilter {
 
     @Override
     public boolean isFit(Path file) {
         return (firstFilter.isFit(file) || secondFilter.isFit(file));
     }
 
-    public OrFilter(Filter firstFilter, Filter secondFilter)  {
+    OrFilter(Filter firstFilter, Filter secondFilter)  {
         super(firstFilter,secondFilter,'|');
     }
 }

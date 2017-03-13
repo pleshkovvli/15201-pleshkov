@@ -1,6 +1,6 @@
 package ru.nsu.ccfit.pleshkov.lab1;
 
-public class FileModificationTimeFilterSerializer implements Serializer {
+class FileModificationTimeFilterSerializer implements Serializer {
     public FileModificationTimeFilter make(String time) {
         boolean isLess;
         long modificationTime;

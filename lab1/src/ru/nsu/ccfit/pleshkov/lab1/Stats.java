@@ -21,6 +21,14 @@ public class Stats {
         this.files = files;
     }
 
+    public void addLines(int lines) {
+        this.lines += lines;
+    }
+
+    public void addFiles(int files) {
+        this.files += files;
+    }
+
     Stats(int lines, int files) {
         this.lines = lines;
         this.files = files;
