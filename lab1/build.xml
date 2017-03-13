@@ -4,16 +4,44 @@
         <javac includeantruntime="false" />
     </presetdef>
 
+    <property name="build.dir" value="build"/>
+    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="tests.dir" value="${build.dir}/tests"/>
+    <property name="junit.dir" value="junit"/>
+    <property name="src.dir" value="src"/>
+    <property name="srctest.dir" value="test"/>
+
     <target name="do">
-        <delete dir="build"/>
+        <delete dir="${build.dir}"/>
         <delete file="LoC.jar"/>
-        <mkdir dir="build/classes"/>
-        <javac srcdir="src" destdir="build/classes"/>
-        <jar destfile="LoC.jar" basedir="build/classes">
+        <mkdir dir="${classes.dir}"/>
+        <mkdir dir="${tests.dir}"/>
+        <javac srcdir="${src.dir}" destdir="${classes.dir}"/>
+        <javac srcdir="${srctest.dir}" classpath="${junit.dir}/junit-4.12.jar:${classes.dir}" destdir="${tests.dir}"/>
+        <jar destfile="LoC.jar" basedir="${classes.dir}">
             <manifest>
                 <attribute name="Main-Class" value="ru.nsu.ccfit.pleshkov.lab1.Main"/>
             </manifest>
         </jar>
     </target>
+
+    <path id="classpath.test">
+        <pathelement location="${junit.dir}/junit-4.12.jar"/>
+        <pathelement location="${junit.dir}/hamcrest-core-1.3.jar"/>
+        <pathelement location="${classes.dir}"/>
+    </path>
+
+    <target name="test" >
+        <junit printsummary="on" haltonfailure="yes" fork="true">
+            <classpath>
+                <path refid="classpath.test"/>
+                <pathelement location="${tests.dir}"/>
+            </classpath>
+            <batchtest>
+                <fileset dir="${srctest.dir}" includes="**/*Test.java" />
+            </batchtest>
+        </junit>
+    </target>
+
 
 </project>
