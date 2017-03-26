@@ -12,6 +12,9 @@ class StandardConfigParser implements ConfigParser {
 
     @Override
     public ArrayList<Filter> parse(String path) throws Lab1Exception {
+        if(path==null) {
+            throw new ParseException("Null path!");
+        }
         Path dir;
         try {
             dir = Paths.get(path);
@@ -45,6 +48,8 @@ class StandardConfigParser implements ConfigParser {
                         }
                     } catch (ParseException ex) {
                         throw new ParseException(ex.getMessage() + line);
+                    } catch (IllegalArgumentException e) {
+                        throw new ParseException(e.getMessage() + line);
                     }
                 } else {
                     throw new ParseException("Unknown filter: " + line);

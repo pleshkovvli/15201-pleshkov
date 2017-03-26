@@ -49,6 +49,9 @@ public class StatisticsHandler {
     static private class StatsComparator implements Comparator<Map.Entry<Filter, Stats> > {
         @Override
         public int compare(Map.Entry<Filter, Stats> first, Map.Entry<Filter, Stats> second) {
+            if(first==null || second==null) {
+                throw new IllegalArgumentException();
+            }
             if(first.getValue().getLines() < second.getValue().getLines()) {
                 return -1;
             } else if(first.getValue().getLines() > second.getValue().getLines()) {

@@ -5,14 +5,21 @@ import java.nio.file.Path;
 class NotFilter implements Filter {
     private Filter filter;
 
+    private static final char OPEN_BRACKET ='(';
+    private static final char CLOSE_BRACKET =')';
+    private static final char SYMBOL = '!';
+
     @Override
     public boolean isFit(Path file) {
+        if(file==null) {
+            throw new IllegalArgumentException();
+        }
         return !filter.isFit(file);
     }
 
     @Override
     public String getParam() {
-        return "!(" + filter.getParam() + ")";
+        return SYMBOL + OPEN_BRACKET + filter.getParam() + CLOSE_BRACKET;
     }
 
     public NotFilter(Filter filter) {

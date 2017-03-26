@@ -7,6 +7,9 @@ public class FilenameExtensionFilter implements Filter {
 
     @Override
     public boolean isFit(Path file) {
+        if(file==null) {
+            throw new IllegalArgumentException();
+        }
         String filename = file.getFileName().toString();
         int index = filename.lastIndexOf('.');
         if(index==-1) {

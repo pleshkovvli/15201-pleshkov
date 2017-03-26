@@ -12,7 +12,12 @@ public class Counter {
     private HashMap<Filter, Stats> filters;
     private Stats total;
 
+    private static final String LOG_FILE_NAME = "errors.log";
+
     public Statistics count(String config, String dir) throws Lab1Exception {
+        if(config==null || dir==null) {
+            throw new InputException("Null args!");
+        }
         filters = new HashMap<>();
         total = new Stats();
         Path directory;
@@ -21,8 +26,12 @@ public class Counter {
         } catch (InvalidPathException e) {
             throw new InputException(e);
         }
-        if(!Paths.get(config).toFile().exists()) {
-            throw new InputException("Config file doesn't exists");
+        try {
+            if (!Paths.get(config).toFile().exists()) {
+                throw new InputException("Config file " + config + " doesn't exists");
+            }
+        } catch (InvalidPathException e) {
+            throw new InputException(e);
         }
         if(!directory.toFile().exists()) {
             throw new InputException("Directory doesn't exists");
@@ -34,10 +43,10 @@ public class Counter {
         }
         FileHandler fh;
         try {
-            if(!Files.exists(Paths.get("errors.log"))) {
-                Files.createFile(Paths.get("errors.log"));
+            if(!Files.exists(Paths.get(LOG_FILE_NAME))) {
+                Files.createFile(Paths.get(LOG_FILE_NAME));
             }
-            fh = new FileHandler("errors.log");
+            fh = new FileHandler(LOG_FILE_NAME);
             SimpleFormatter formatter = new SimpleFormatter();
             fh.setFormatter(formatter);
             logger.addHandler(fh);
@@ -47,9 +56,11 @@ public class Counter {
         }
         FileVisitor<Path> fv = new SimpleFileVisitor<Path>() {
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-                    throws IOException {
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                 try {
+                    if(!file.toFile().isFile()) {
+                        return FileVisitResult.CONTINUE;
+                    }
                     action(file);
                 } catch (Lab1RuntimeException e) {
                     logger.info(e.getMessage());
@@ -58,13 +69,26 @@ public class Counter {
             }
             @Override
             public FileVisitResult visitFileFailed(Path file, IOException io) {
-                return FileVisitResult.SKIP_SUBTREE;
+                logger.info(io.getMessage());
+                return FileVisitResult.CONTINUE;
+            }
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                if(dir.toFile().length()==0) {
+                    return FileVisitResult.SKIP_SUBTREE;
+                }
+                try {
+                    return super.preVisitDirectory(dir, attrs);
+                } catch (IOException io) {
+                    logger.info(io.getMessage());
+                    return FileVisitResult.SKIP_SUBTREE;
+                }
             }
         };
 
         try {
             Files.walkFileTree(directory, fv);
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new CountException("Fatal error: " + e.getMessage());
         }
         logger.removeHandler(fh);
@@ -72,18 +96,13 @@ public class Counter {
     }
 
     private void action(Path file) {
-        File file1 = new File(file.toString());
-        if(!file1.canRead()) {
-            throw new Lab1RuntimeException("Permission denied: " + file.toString());
-        }
         boolean isCounted = false;
         for (Map.Entry<Filter, Stats> entry : filters.entrySet()) {
             if (entry.getKey().isFit(file)) {
                 int lines = 0;
-                try(BufferedReader reader = new BufferedReader(new FileReader(file.toString()))) {
-                    while (reader.readLine() != null) {
-                        lines++;
-                    }
+                try(LineNumberReader  lnr = new LineNumberReader(new FileReader(file.toString()))) {
+                    lnr.skip(Long.MAX_VALUE);
+                    lines = lnr.getLineNumber();
                 } catch (FileNotFoundException e) {
                         throw new Lab1RuntimeException("File not found: " + file.toString() + e.getMessage());
                 } catch (IOException e) {

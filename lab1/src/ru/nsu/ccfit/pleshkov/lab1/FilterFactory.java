@@ -18,12 +18,14 @@ public class FilterFactory {
     }
 
     static public Filter make(String s) throws ParseException {
+        if(s==null) {
+            throw new IllegalArgumentException();
+        }
         try {
-            Serializer seria = getSerializer(s.charAt(0));
-            Filter filter = seria.make(s);
+            Serializer serializer = getSerializer(s.charAt(0));
+            Filter filter = serializer.make(s);
             return filter;
         } catch (Exception e) {
-            e.printStackTrace();
             System.out.println(e.getMessage());
             throw new ParseException();
         }
@@ -43,6 +45,9 @@ public class FilterFactory {
     }
 
     static public void addFilter(char c, String className) {
+        if(className==null) {
+            throw new IllegalArgumentException();
+        }
         map.put(c, new Pair(className,null));
     }
 

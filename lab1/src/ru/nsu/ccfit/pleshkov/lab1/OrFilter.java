@@ -6,6 +6,9 @@ class OrFilter extends AggregateFilter {
 
     @Override
     public boolean isFit(Path file) {
+        if(file==null) {
+            throw new IllegalArgumentException();
+        }
         return (firstFilter.isFit(file) || secondFilter.isFit(file));
     }
 
