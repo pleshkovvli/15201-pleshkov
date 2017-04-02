@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,7 +24,10 @@ public class CounterTest {
         Filter one = new FilenameExtensionFilter(".c");
         Filter two = new FilenameExtensionFilter(".h");
         Filter three = new FileModificationTimeFilter(true, 5656566656L*1000);
-        Filter four = new OrFilter(one, two);
+        ArrayList<Filter> args = new ArrayList<>();
+        args.add(one);
+        args.add(two);
+        Filter four = new OrFilter(args);
         map.put(one, new Stats(8, 4));
         map.put(two, new Stats(8, 2));
         map.put(three, new Stats(21,7));
@@ -33,6 +37,7 @@ public class CounterTest {
         try {
             statistics = counter.count("testexamples/config1","testexamples/test1");
         } catch (Lab1Exception e) {
+            e.printStackTrace();
             Assert.fail();
             System.exit(1);
         }

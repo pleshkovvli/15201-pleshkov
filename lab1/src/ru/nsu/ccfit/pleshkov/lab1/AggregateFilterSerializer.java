@@ -1,5 +1,6 @@
 package ru.nsu.ccfit.pleshkov.lab1;
 
+import java.util.ArrayList;
 import java.util.Stack;
 
 abstract class AggregateFilterSerializer implements Serializer {
@@ -19,37 +20,40 @@ abstract class AggregateFilterSerializer implements Serializer {
             throw new IllegalArgumentException();
         }
         try {
-            agrFilter = agrFilter.charAt(0) + String.valueOf(OPEN_BRACKET) +
-                    agrFilter.substring(2,agrFilter.length()-1).trim() + String.valueOf(CLOSE_BRACKET);
-            firstFilter = FilterFactory.make(agrFilter.substring(2,getIndex(agrFilter)));
-            secondFilter = FilterFactory.make(agrFilter.substring(getIndex(agrFilter),agrFilter.length()-1).trim());
-            return doMake(firstFilter,secondFilter);
+            ArrayList<Filter> filters = new ArrayList<>();
+            agrFilter = agrFilter.substring(2, agrFilter.length() - 1).trim();
+            while(agrFilter.length()>0) {
+                String first = getIndex(agrFilter);
+                filters.add(FilterFactory.make(first.trim()));
+                agrFilter = agrFilter.trim().substring(first.length()).trim();
+            }
+            return doMake(filters);
         } catch (ParseException ex) {
             throw ex;
         }
     }
 
     abstract protected boolean checkType(char c);
-    abstract protected AggregateFilter doMake(Filter firstFilter,Filter secondFilter) throws ParseException;
+    abstract protected AggregateFilter doMake(ArrayList<Filter> filters) throws ParseException;
 
-    private int getIndex(String expression) throws ParseException {
+    private String getIndex(String expression) throws ParseException {
         Stack<Character> stack = new Stack<>();
-        if(expression.charAt(3)!=OPEN_BRACKET) {
-            return expression.indexOf(DIVIDER);
+        if(!expression.trim().contains(String.valueOf(DIVIDER))) {
+            return expression;
+        }
+        if(expression.charAt(1)!=OPEN_BRACKET) {
+            return expression.substring(0,expression.indexOf(DIVIDER));
         }
         stack.push(expression.charAt(3));
         char[] exp = expression.toCharArray();
         int i;
-        for(i = 4; i<expression.length() && !stack.isEmpty(); i++) {
+        for(i = 2; i<expression.length() && !stack.isEmpty(); i++) {
             if(exp[i]==OPEN_BRACKET) {
                 stack.push(exp[i]);
             } else if(exp[i]==CLOSE_BRACKET) {
                 stack.pop();
             }
         }
-        if(i==expression.length()) {
-            throw new ParseException();
-        }
-        return i;
+        return expression.substring(0,i);
     }
 }

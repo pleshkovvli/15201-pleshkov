@@ -1,7 +1,9 @@
 package ru.nsu.ccfit.pleshkov.lab1;
 
+import java.util.ArrayList;
+
 abstract class AggregateFilter implements Filter {
-    Filter firstFilter, secondFilter;
+    ArrayList<Filter> filters = new ArrayList<>();
     char symbol;
 
     private static final char OPEN_BRACKET ='(';
@@ -10,16 +12,19 @@ abstract class AggregateFilter implements Filter {
 
     @Override
     public String getParam() {
-        return symbol + String.valueOf(OPEN_BRACKET) + firstFilter.getParam()
-                + DIVIDER + secondFilter.getParam() + String.valueOf(CLOSE_BRACKET);
+        String param = "";
+        for(Filter filter : filters) {
+            param = param + filter.getParam() + String.valueOf(DIVIDER);
+        }
+        param = param.trim();
+        return symbol + String.valueOf(OPEN_BRACKET) + param + String.valueOf(CLOSE_BRACKET);
     }
 
-    AggregateFilter(Filter firstFilter, Filter secondFilter, char sym) {
-        if(firstFilter==null || secondFilter==null) {
+    AggregateFilter(ArrayList<Filter> filters, char sym) {
+        this.symbol = sym;
+        if(filters.contains(null) || filters.isEmpty()) {
             throw new IllegalArgumentException();
         }
-        this.symbol = sym;
-        this.firstFilter = firstFilter;
-        this.secondFilter = secondFilter;
+        this.filters = filters;
     }
 }

@@ -1,6 +1,7 @@
 package ru.nsu.ccfit.pleshkov.lab1;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 
 class OrFilter extends AggregateFilter {
 
@@ -9,10 +10,15 @@ class OrFilter extends AggregateFilter {
         if(file==null) {
             throw new IllegalArgumentException();
         }
-        return (firstFilter.isFit(file) || secondFilter.isFit(file));
+        for(Filter filter : filters) {
+            if(filter.isFit(file)) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    OrFilter(Filter firstFilter, Filter secondFilter)  {
-        super(firstFilter,secondFilter,'|');
+    OrFilter(ArrayList<Filter> filters)  {
+        super(filters,'|');
     }
 }

@@ -1,6 +1,7 @@
 package ru.nsu.ccfit.pleshkov.lab1;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 
 class AndFilter extends AggregateFilter {
 
@@ -9,10 +10,15 @@ class AndFilter extends AggregateFilter {
         if(file==null) {
             throw new IllegalArgumentException();
         }
-        return (firstFilter.isFit(file) && secondFilter.isFit(file));
+        for(Filter filter : filters) {
+            if(!filter.isFit(file)) {
+                return false;
+            }
+        }
+        return true;
     }
 
-    AndFilter(Filter firstFilter, Filter secondFilter) {
-        super(firstFilter,secondFilter,'&');
+    AndFilter(ArrayList<Filter> filters) {
+        super(filters,'&');
     }
 }

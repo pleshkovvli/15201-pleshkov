@@ -19,7 +19,8 @@ class NotFilter implements Filter {
 
     @Override
     public String getParam() {
-        return SYMBOL + OPEN_BRACKET + filter.getParam() + CLOSE_BRACKET;
+        return String.valueOf(SYMBOL) + String.valueOf(OPEN_BRACKET) + filter.getParam()
+                + String.valueOf(CLOSE_BRACKET);
     }
 
     public NotFilter(Filter filter) {
