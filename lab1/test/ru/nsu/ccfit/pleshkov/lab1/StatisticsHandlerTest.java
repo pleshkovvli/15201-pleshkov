@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -11,13 +12,8 @@ import java.util.HashMap;
 
 public class StatisticsHandlerTest {
     @Test
-    public void printStats() {
-        try {
-            System.setOut(new PrintStream("testout"));
-        } catch (IOException e) {
-            Assert.assertTrue(false);
-            System.exit(1);
-        }
+    public void printStats() throws FileNotFoundException {
+        System.setOut(new PrintStream("testout"));
         HashMap<Filter, Stats> map = new HashMap<>();
         Filter one = new FilenameExtensionFilter(".l");
         Filter two = new FileModificationTimeFilter(true, 4567*1000);

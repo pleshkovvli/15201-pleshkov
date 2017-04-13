@@ -3,23 +3,17 @@ package ru.nsu.ccfit.pleshkov.lab1;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.*;
-
 public class CounterTest {
     @Test
-    public void count() {
-        try {
-            System.setOut(new PrintStream("testout"));
-        } catch (IOException e) {
-            Assert.assertTrue(false);
-            System.exit(1);
-        }
+    public void count() throws FileNotFoundException {
+        System.setOut(new PrintStream("testout"));
         HashMap<Filter, Stats> map = new HashMap<>();
         Filter one = new FilenameExtensionFilter(".c");
         Filter two = new FilenameExtensionFilter(".h");
@@ -48,7 +42,7 @@ public class CounterTest {
         for(Map.Entry<Filter, Stats> entry : map.entrySet()) {
             boolean isFail = true;
             for(Map.Entry<Filter, Stats> entry2 : map2.entrySet()) {
-                if(entry.getKey().equals(entry2.getKey())) {
+                if(entry.getKey().equalsByParam(entry2.getKey())) {
                     if(entry.getValue().getLines()!=entry2.getValue().getLines()
                             || entry.getValue().getFiles()!=entry2.getValue().getFiles()) {
                         Assert.fail();
@@ -67,7 +61,7 @@ public class CounterTest {
         for(Map.Entry<Filter, Stats> entry : map2.entrySet()) {
             boolean isFail = true;
             for(Map.Entry<Filter, Stats> entry2 : map.entrySet()) {
-                if(entry.getKey().equals(entry2.getKey())) {
+                if(entry.getKey().equalsByParam(entry2.getKey())) {
                     if(entry.getValue().getLines()!=entry2.getValue().getLines()
                             || entry.getValue().getFiles()!=entry2.getValue().getFiles()) {
                         Assert.fail();

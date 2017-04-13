@@ -5,7 +5,7 @@ import java.nio.file.Path;
 public interface Filter {
     boolean isFit(Path file);
     String getParam();
-    default boolean equals(Filter other) {
+    default boolean equalsByParam(Filter other) {
         return getParam().equals(other.getParam());
     }
 }

@@ -40,6 +40,13 @@ public class Stats {
     }
 
     public boolean equals(Stats stats) {
+        if(stats==null) {
+            return false;
+        }
         return (stats.getFiles()==files) && (stats.getLines()==lines);
+    }
+
+    public int hashCode() {
+        return files*67 + lines;
     }
 }

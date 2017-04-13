@@ -6,8 +6,6 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import static org.junit.Assert.*;
-
 public class StandardConfigParserTest {
     @Test
     public void parse() {
@@ -29,7 +27,7 @@ public class StandardConfigParserTest {
         for(Filter entry : fil) {
             boolean isFail = true;
             for(Filter entry2 : filters) {
-                if(entry.equals(entry2)) {
+                if(entry.equalsByParam(entry2)) {
                     isFail = false;
                 }
             }
@@ -41,7 +39,7 @@ public class StandardConfigParserTest {
         for(Filter entry : filters) {
             boolean isFail = true;
             for(Filter entry2 : fil) {
-                if(entry.equals(entry2)) {
+                if(entry.equalsByParam(entry2)) {
                     isFail = false;
                 }
             }
@@ -67,7 +65,7 @@ public class StandardConfigParserTest {
             if(filters.size()!=1) {
                 Assert.fail();
             }
-            Assert.assertTrue(one.equals(filters.get(0)));
+            Assert.assertTrue(one.equalsByParam(filters.get(0)));
         } catch (Lab1Exception e) {
             e.printStackTrace();
             Assert.fail();
@@ -95,7 +93,7 @@ public class StandardConfigParserTest {
             if(filters.size()!=1) {
                 Assert.fail();
             }
-            Assert.assertTrue(one.equals(filters.get(0)));
+            Assert.assertTrue(one.equalsByParam(filters.get(0)));
         } catch (Lab1Exception e) {
             e.printStackTrace();
             Assert.fail();

@@ -7,52 +7,32 @@ import java.io.*;
 
 public class MainTest {
     @Test
-    public void commonTest() {
-        try {
-            System.setOut(new PrintStream("testout"));
-        } catch (IOException e) {
-            Assert.fail();
-            System.exit(1);
-        }
+    public void commonTest() throws FileNotFoundException {
+        System.setOut(new PrintStream("testout"));
         String[] args = {"testexamples/config1","testexamples/test1"};
         Main.main(args);
         Assert.assertTrue(areFilesIdentical(new File("testout"),new File("testexamples/test1out")));
     }
 
     @Test
-    public void wrongFilter() {
-        try {
-            System.setOut(new PrintStream("testout"));
-        } catch (IOException e) {
-            Assert.fail();
-            System.exit(1);
-        }
+    public void wrongFilter() throws FileNotFoundException {
+        System.setOut(new PrintStream("testout"));
         String[] args = {"testexamples/config3","testexamples/test1"};
         Main.main(args);
         Assert.assertTrue(areFilesIdentical(new File("testout"),new File("testexamples/test3out")));
     }
 
     @Test
-    public void wrongConfig() {
-        try {
-            System.setOut(new PrintStream("testout"));
-        } catch (IOException e) {
-            Assert.fail();
-            System.exit(1);
-        }
+    public void wrongConfig() throws FileNotFoundException {
+        System.setOut(new PrintStream("testout"));
         String[] args = {"nonsence","testexamples/test1"};
         Main.main(args);
         Assert.assertTrue(areFilesIdentical(new File("testout"),new File("testexamples/test4out")));
     }
 
     @Test
-    public void wrongDirectory() {
-        try {
-            System.setOut(new PrintStream("testout"));
-        } catch (IOException e) {
-            Assert.fail();
-            System.exit(1);
-        }
+    public void wrongDirectory() throws FileNotFoundException {
+        System.setOut(new PrintStream("testout"));
         String[] args = {"testexamples/config3","nonsence"};
         Main.main(args);
         Assert.assertTrue(areFilesIdentical(new File("testout"),new File("testexamples/test5out")));

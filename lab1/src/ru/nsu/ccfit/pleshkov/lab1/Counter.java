@@ -62,7 +62,7 @@ public class Counter {
                         return FileVisitResult.CONTINUE;
                     }
                     action(file);
-                } catch (Lab1RuntimeException e) {
+                } catch (FileWalkerRuntimeException e) {
                     logger.info(e.getMessage());
                 }
                 return FileVisitResult.CONTINUE;
@@ -104,9 +104,9 @@ public class Counter {
                     lnr.skip(Long.MAX_VALUE);
                     lines = lnr.getLineNumber();
                 } catch (FileNotFoundException e) {
-                        throw new Lab1RuntimeException("File not found: " + file.toString() + e.getMessage());
+                        throw new FileWalkerRuntimeException("File not found: " + file.toString() + e.getMessage(),e);
                 } catch (IOException e) {
-                    throw new Lab1RuntimeException("Failed: " + e.getMessage());
+                    throw new FileWalkerRuntimeException("Failed: " + e.getMessage(),e);
                 }
                 entry.getValue().addLines(lines);
                 entry.getValue().addFiles(1);
