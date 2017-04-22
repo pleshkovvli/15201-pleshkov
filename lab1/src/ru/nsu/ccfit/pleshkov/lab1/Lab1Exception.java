@@ -5,5 +5,7 @@ public class Lab1Exception extends Exception {
         super(e);
     }
 
-    Lab1Exception() {}
+    Lab1Exception(String s) {
+        super(s);
+    }
 }
