@@ -21,8 +21,8 @@ public class Supplier<T extends Detail> implements Runnable {
     }
 
     public void run() {
-        while(true) {
-            try {
+        try {
+            while(true) {
                 Thread.sleep(sleepTime);
                 T detail = null;
                 try {
@@ -32,9 +32,9 @@ public class Supplier<T extends Detail> implements Runnable {
                     e.printStackTrace();
                 }
                 storage.enqueue(detail);
-            } catch (InterruptedException e) {
-
             }
+        } catch (InterruptedException e) {
+
         }
     }
 

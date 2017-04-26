@@ -1,6 +1,6 @@
 package ru.nsu.ccfit.pleshkov.lab2.factory;
 
-public class StorageObserver implements Observer {
+public class CountObserver<T extends Observable> implements Observer {
     public int getCount() {
         return count;
     }
@@ -12,8 +12,7 @@ public class StorageObserver implements Observer {
         count = newData;
     }
 
-    StorageObserver(Storage storage) {
-        storage.addObserver(this);
-        count = storage.getCount();
+    public CountObserver(T observable) {
+        observable.addObserver(this);
     }
 }

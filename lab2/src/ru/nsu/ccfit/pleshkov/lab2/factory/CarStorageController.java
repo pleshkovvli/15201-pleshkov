@@ -1,6 +1,6 @@
 package ru.nsu.ccfit.pleshkov.lab2.factory;
 
-public class Controller implements Runnable {
+public class CarStorageController implements Runnable {
     private CarStorage carStorage;
     private Factory factory;
 
@@ -14,11 +14,11 @@ public class Controller implements Runnable {
                 }
             }
         } catch (InterruptedException e) {
-            e.printStackTrace();
+
         }
     }
 
-    Controller(CarStorage carStorage, Factory factory) {
+    CarStorageController(CarStorage carStorage, Factory factory) {
         this.carStorage = carStorage;
         this.factory = factory;
     }

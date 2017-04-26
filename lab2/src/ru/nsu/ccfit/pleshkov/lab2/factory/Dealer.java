@@ -1,9 +1,13 @@
 package ru.nsu.ccfit.pleshkov.lab2.factory;
 
-public class Dealer implements Runnable {
+import java.util.LinkedList;
+
+public class Dealer implements Runnable, Observable {
     private CarStorage storage;
-    private long profit = 0;
+    private int profit = 0;
     private int sleepTime;
+
+    private LinkedList<Observer> observers = new LinkedList<>();
 
     public int getSleepTime() {
         return sleepTime;
@@ -20,10 +24,11 @@ public class Dealer implements Runnable {
                 Car car = storage.dequeue();
                 if(car!=null) {
                     profit++;
+                    notifyObservers();
                 }
 
             } catch (InterruptedException e) {
-
+                break;
             }
         }
     }
@@ -33,8 +38,19 @@ public class Dealer implements Runnable {
         this.sleepTime = sleepTime;
     }
 
-    long getProfit() {
+    int getProfit() {
         return profit;
     }
 
+    @Override
+    public void addObserver(Observer observer) {
+        observers.add(observer);
+    }
+
+    @Override
+    public void notifyObservers() {
+        for(Observer observer : observers) {
+            observer.update(getProfit());
+        }
+    }
 }
