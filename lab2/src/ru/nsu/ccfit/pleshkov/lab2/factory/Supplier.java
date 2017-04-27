@@ -1,6 +1,6 @@
 package ru.nsu.ccfit.pleshkov.lab2.factory;
 
-public class Supplier<T extends Detail> implements Runnable {
+public class Supplier<T extends IDTraceable> implements Runnable {
     private Storage<T> storage;
     final private Class typeClass;
     private Class[] argsClasses;

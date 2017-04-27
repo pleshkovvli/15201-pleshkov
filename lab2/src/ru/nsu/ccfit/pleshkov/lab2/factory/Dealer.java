@@ -5,40 +5,37 @@ import java.util.LinkedList;
 public class Dealer implements Runnable, Observable {
     private CarStorage storage;
     private int profit = 0;
-    private int sleepTime;
+    private FactoryLogger logger;
+    private int number;
 
     private LinkedList<Observer> observers = new LinkedList<>();
-
-    public int getSleepTime() {
-        return sleepTime;
-    }
-
-    public void setSleepTime(int sleepTime) {
-        this.sleepTime = sleepTime;
-    }
 
     public void run() {
         while(true) {
             try {
-                Thread.sleep(sleepTime);
                 Car car = storage.dequeue();
                 if(car!=null) {
                     profit++;
                     notifyObservers();
                 }
+                try {
+                    logger.log(number, car);
+                } catch (Exception e) {
 
+                }
             } catch (InterruptedException e) {
                 break;
             }
         }
     }
 
-    Dealer(CarStorage storage, int sleepTime) {
+    Dealer(CarStorage storage, FactoryLogger logger, int number) {
         this.storage = storage;
-        this.sleepTime = sleepTime;
+        this.logger = logger;
+        this.number = number;
     }
 
-    int getProfit() {
+    private int getProfit() {
         return profit;
     }
 

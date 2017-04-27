@@ -32,6 +32,7 @@ public class Form extends JFrame  {
     public Form() {
         setBounds(400,200,500,400);
         setContentPane(Panel);
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         textEngines.setText("Number of engines:");
         textBodies.setText("Number of bodies:");
         textAccessories.setText("Number of accessories:");
@@ -143,6 +144,7 @@ public class Form extends JFrame  {
             @Override
             public void windowClosing(WindowEvent e) {
                 controller.finish();
+                Form.this.dispose();
             }
         });
         setVisible(true);

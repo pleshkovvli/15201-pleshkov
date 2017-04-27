@@ -12,7 +12,7 @@ public class Controller {
     private CountObserver<Dealer> profitObserver;
     private Supplier<Engine> engineSupplier;
     private Supplier<Body> bodiesSupplier;
-    private Supplier<Accessory> accessoriesSupplier;
+    private Supplier<Accessory>[] accessoriesSuppliers;
     private Thread[] threads;
     private Factory factory;
 
@@ -21,12 +21,12 @@ public class Controller {
     private Form form;
 
     public Controller(Storage<Accessory> accessoryStorage, Storage<Body> bodyStorage, Storage<Engine> engineStorage,
-                     Dealer dealer, Supplier<Engine> engineSupplier,Supplier<Body> bodiesSupplier,
-                      Supplier<Accessory> accessorySupplier, Form form, Thread[] threads, Factory factory) {
+                     Dealer[] dealers, Supplier<Engine> engineSupplier,Supplier<Body> bodiesSupplier,
+                      Supplier<Accessory>[] accessorySuppliers, Form form, Thread[] threads, Factory factory) {
         this.factory = factory;
         this.threads = threads;
         this.engineSupplier = engineSupplier;
-        this.accessoriesSupplier = accessorySupplier;
+        this.accessoriesSuppliers = accessorySuppliers;
         this.bodiesSupplier = bodiesSupplier;
         bodyCountObserver = new SpecificCountObserver<Storage<Body>>(bodyStorage) {
             @Override
@@ -46,7 +46,7 @@ public class Controller {
                 form.updateNumberOfAccessories(getCount());
             }
         };
-        profitObserver = new SpecificCountObserver<Dealer>(dealer) {
+        profitObserver = new SpecificCountObserver<Dealer>(dealers[0]) {
             @Override
             protected void specificJob() {
                 form.updateProfit(getCount());
@@ -76,9 +76,10 @@ public class Controller {
 
     public void changeAccessoriesSleepTime(int sleep) {
         if((sleep < 0) || (sleep > MAX_SLEEP_TIME)) {
-            form.setAccessoriesSleep(accessoriesSupplier.getSleepTime());
+            form.setAccessoriesSleep(accessoriesSuppliers[0].getSleepTime());
         } else {
-            accessoriesSupplier.setSleepTime(sleep);
+            for(int i = 0 ; i<accessoriesSuppliers.length; i++) {
+                accessoriesSuppliers[i].setSleepTime(sleep);            }
         }
     }
 
@@ -105,7 +106,7 @@ public class Controller {
         for(Thread thread : threads)  {
             thread.interrupt();
         }
-        factory.stopPool();
+        factory.stop();
         System.out.println('e');
     }
 }
