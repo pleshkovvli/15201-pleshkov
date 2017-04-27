@@ -5,9 +5,10 @@ import ru.nsu.ccfit.pleshkov.lab2.controller.Controller;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import java.awt.*;
 import java.awt.event.*;
 
-public class Form extends JFrame  {
+public class Form extends JFrame {
     private JPanel Panel;
     private JLabel numberOfBodies;
     private JLabel numberOfEngines;
@@ -27,10 +28,55 @@ public class Form extends JFrame  {
     private JTextField bodiesSleepTimeNumber;
     private JSlider bodiesSlider;
 
+    private String labelDelimiter = " / ";
+
+    public void setNumberOfDealers(int numberOfDealers) {
+        this.numberOfDealers = numberOfDealers;
+        numberOfDealersString = " by " + numberOfDealers + " dealers";
+    }
+
+    private int numberOfDealers;
+    private String numberOfDealersString;
+
+
+    public void setNumberOfAccessoriesSuppliers(int numberOfAccessoriesSuppliers) {
+        this.numberOfAccessoriesSuppliers = numberOfAccessoriesSuppliers;
+        accessoriesStorageCapacityString = labelDelimiter + String.valueOf(accessoriesStorageCapacity)
+                + " by " + String.valueOf(numberOfAccessoriesSuppliers) + " suppliers";
+    }
+
+    private int numberOfAccessoriesSuppliers;
+    private String numberOfAccessoriesSuppliersString;
+
+    public void setAccessoriesStorageCapacity(int accessoriesStorageCapacity) {
+        this.accessoriesStorageCapacity = accessoriesStorageCapacity;
+        accessoriesStorageCapacityString = labelDelimiter + String.valueOf(accessoriesStorageCapacity)
+                + " by " + String.valueOf(numberOfAccessoriesSuppliers) + " suppliers";
+    }
+
+    private int accessoriesStorageCapacity;
+    private String accessoriesStorageCapacityString;
+
+    public void setBodiesStorageCapacity(int bodiesStorageCapacity) {
+        this.bodiesStorageCapacity = bodiesStorageCapacity;
+        bodiesStorageCapacityString = labelDelimiter + String.valueOf(bodiesStorageCapacity);
+    }
+
+    private int bodiesStorageCapacity;
+    private String bodiesStorageCapacityString;
+
+    public void setEnginesStorageCapacity(int enginesStorageCapacity) {
+        this.enginesStorageCapacity = enginesStorageCapacity;
+        enginesStorageCapacityString = labelDelimiter + String.valueOf(enginesStorageCapacity);
+    }
+
+    private int enginesStorageCapacity;
+    private String enginesStorageCapacityString;
+
     private Controller controller;
 
     public Form() {
-        setBounds(400,200,500,400);
+        setBounds(400, 200, 600, 500);
         setContentPane(Panel);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         textEngines.setText("Number of engines:");
@@ -46,11 +92,12 @@ public class Form extends JFrame  {
         bodiesSleepTimeText.setText("Bodies Sleep Time");
         bodiesSlider.setMaximum(Controller.MAX_SLEEP_TIME);
         bodiesSlider.setMinimum(0);
+        enginesSleepTimeNumber.setPreferredSize(new Dimension(5, 5));
         enginesSleepTimeNumber.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String sleep = enginesSleepTimeNumber.getText();
-                if(sleep!=null && !sleep.isEmpty()) {
+                if (sleep != null && !sleep.isEmpty()) {
                     System.out.println(sleep);
                     int sl = -1;
                     try {
@@ -58,7 +105,7 @@ public class Form extends JFrame  {
                     } catch (NumberFormatException ex) {
 
                     }
-                    if((sl >= 0) && (sl <= Controller.MAX_SLEEP_TIME)) {
+                    if ((sl >= 0) && (sl <= Controller.MAX_SLEEP_TIME)) {
                         setEnginesSlider(sl);
                     }
                     controller.changeEnginesSleepTime(sl);
@@ -69,7 +116,7 @@ public class Form extends JFrame  {
             @Override
             public void stateChanged(ChangeEvent e) {
                 int sleep = enginesSlider.getValue();
-                if((sleep >= 0) && (sleep <= Controller.MAX_SLEEP_TIME)) {
+                if ((sleep >= 0) && (sleep <= Controller.MAX_SLEEP_TIME)) {
                     setEnginesSleepTimeNumber(sleep);
                 }
 
@@ -82,7 +129,7 @@ public class Form extends JFrame  {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String sleep = accessoriesSleepTimeNumber.getText();
-                if(sleep!=null && !sleep.isEmpty()) {
+                if (sleep != null && !sleep.isEmpty()) {
                     System.out.println(sleep);
                     int sl = -1;
                     try {
@@ -90,7 +137,7 @@ public class Form extends JFrame  {
                     } catch (NumberFormatException ex) {
 
                     }
-                    if((sl >= 0) && (sl <= Controller.MAX_SLEEP_TIME)) {
+                    if ((sl >= 0) && (sl <= Controller.MAX_SLEEP_TIME)) {
                         setAccessoriesSlider(sl);
                     }
                     controller.changeAccessoriesSleepTime(sl);
@@ -101,7 +148,7 @@ public class Form extends JFrame  {
             @Override
             public void stateChanged(ChangeEvent e) {
                 int sleep = accessoriesSlider.getValue();
-                if((sleep >= 0) && (sleep <= Controller.MAX_SLEEP_TIME)) {
+                if ((sleep >= 0) && (sleep <= Controller.MAX_SLEEP_TIME)) {
                     setAccessoriesSleepTimeNumber(sleep);
                 }
                 controller.changeAccessoriesSleepTime(sleep);
@@ -113,7 +160,7 @@ public class Form extends JFrame  {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String sleep = bodiesSleepTimeNumber.getText();
-                if(sleep!=null && !sleep.isEmpty()) {
+                if (sleep != null && !sleep.isEmpty()) {
                     System.out.println(sleep);
                     int sl = -1;
                     try {
@@ -121,7 +168,7 @@ public class Form extends JFrame  {
                     } catch (NumberFormatException ex) {
 
                     }
-                    if((sl >= 0) && (sl <= Controller.MAX_SLEEP_TIME)) {
+                    if ((sl >= 0) && (sl <= Controller.MAX_SLEEP_TIME)) {
                         setBodiesSlider(sl);
                     }
                     controller.changeBodiesSleepTime(sl);
@@ -131,9 +178,9 @@ public class Form extends JFrame  {
         bodiesSlider.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
-                
+
                 int sleep = bodiesSlider.getValue();
-                if((sleep >= 0) && (sleep <= Controller.MAX_SLEEP_TIME)) {
+                if ((sleep >= 0) && (sleep <= Controller.MAX_SLEEP_TIME)) {
                     setBodiesSleepTimeNumber(sleep);
                 }
                 controller.changeBodiesSleepTime(sleep);
@@ -225,19 +272,19 @@ public class Form extends JFrame  {
     }
 
     public void updateNumberOfBodies(int newData) {
-        numberOfBodies.setText(String.valueOf(newData));
+        numberOfBodies.setText(String.valueOf(newData) + bodiesStorageCapacityString);
     }
 
     public void updateNumberOfAccessories(int newData) {
-        numberOfAccessories.setText(String.valueOf(newData));
+        numberOfAccessories.setText(String.valueOf(newData) + accessoriesStorageCapacityString);
     }
 
     public void updateNumberOfEngines(int newData) {
-        numberOfEngines.setText(String.valueOf(newData));
+        numberOfEngines.setText(String.valueOf(newData) + enginesStorageCapacityString);
     }
 
     public void updateProfit(int newData) {
-        numberOfProfit.setText(String.valueOf(newData));
+        numberOfProfit.setText(String.valueOf(newData) + numberOfDealersString);
     }
 
 }

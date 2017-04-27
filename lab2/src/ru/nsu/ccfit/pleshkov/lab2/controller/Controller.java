@@ -9,7 +9,7 @@ public class Controller {
     private CountObserver<Storage<Body>> bodyCountObserver;
     private CountObserver<Storage<Engine>> engineCountObserver;
     private CountObserver<Storage<Accessory>> accessoryCountObserver;
-    private CountObserver<Dealer> profitObserver;
+    private CountObserver<Dealer>[] profitObservers;
     private Supplier<Engine> engineSupplier;
     private Supplier<Body> bodiesSupplier;
     private Supplier<Accessory>[] accessoriesSuppliers;
@@ -46,16 +46,29 @@ public class Controller {
                 form.updateNumberOfAccessories(getCount());
             }
         };
-        profitObserver = new SpecificCountObserver<Dealer>(dealers[0]) {
-            @Override
-            protected void specificJob() {
-                form.updateProfit(getCount());
-            }
-        };
+
+        profitObservers = new SpecificCountObserver[dealers.length];
+        for(int i = 0; i < dealers.length; i++) {
+            profitObservers[i] = new SpecificCountObserver(dealers[i]) {
+                @Override
+                protected void specificJob () {
+                    int sum = 0;
+                    for(int j = 0; j < profitObservers.length; j++) {
+                        sum += profitObservers[j].getCount();
+                    }
+                    form.updateProfit(sum);
+                }
+            } ;
+        }
         this.form = form;
         form.setEnginesSleep(engineSupplier.getSleepTime());
-        form.setAccessoriesSleep(engineSupplier.getSleepTime());
-        form.setBodiesSleep(engineSupplier.getSleepTime());
+        form.setAccessoriesSleep(accessorySuppliers[0].getSleepTime());
+        form.setBodiesSleep(bodiesSupplier.getSleepTime());
+        form.setAccessoriesStorageCapacity(accessoryStorage.getCapacity());
+        form.setBodiesStorageCapacity(bodyStorage.getCapacity());
+        form.setEnginesStorageCapacity(engineStorage.getCapacity());
+        form.setNumberOfAccessoriesSuppliers(accessoriesSuppliers.length);
+        form.setNumberOfDealers(dealers.length);
     }
 
     public void changeEnginesSleepTime(int sleep) {
@@ -87,7 +100,6 @@ public class Controller {
         public SpecificCountObserver(T observable) {
             super(observable);
         }
-
         abstract protected void specificJob();
 
         @Override

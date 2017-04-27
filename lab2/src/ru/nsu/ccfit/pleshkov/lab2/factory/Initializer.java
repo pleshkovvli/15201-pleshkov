@@ -63,55 +63,66 @@ public class Initializer {
         Controller controller = new Controller(accessoryStorage,bodyStorage,engineStorage,dealers,
                 engineSupplier,bodiesSupplier,accessorySuppliers,form, threads, factory);
         form.setController(controller);
+        for(Thread t : threads) {
+            t.start();
+        }
     }
 
     private static void parseConfig(Path configFilePath) throws BadParseException {
         try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(configFilePath.toFile())))) {
             String s = reader.readLine();
+            System.out.println(s);
             if(s.substring(0,accessoryStorageCapacityString.length()).equals(accessoryStorageCapacityString)) {
                 accessoryStorageCapacity = Integer.parseInt(s.substring(accessoryStorageCapacityString.length()+1));
             } else {
                 accessoryStorageCapacity = DEFAULT_CAPACITY;
             }
             s = reader.readLine();
+            System.out.println(s);
             if(s.substring(0,bodiesStorageCapacityString.length()).equals(bodiesStorageCapacityString)) {
                 bodiesStorageCapacity = Integer.parseInt(s.substring(bodiesStorageCapacityString.length()+1));
             } else {
                 bodiesStorageCapacity = DEFAULT_CAPACITY;
             }
             s = reader.readLine();
+            System.out.println(s);
             if(s.substring(0,enginesStorageCapacityString.length()).equals(enginesStorageCapacityString)) {
                 enginesStorageCapacity = Integer.parseInt(s.substring(enginesStorageCapacityString.length()+1));
             } else {
                 enginesStorageCapacity = DEFAULT_CAPACITY;
             }
             s = reader.readLine();
+            System.out.println(s);
             if(s.substring(0,carStorageCapacityString.length()).equals(carStorageCapacityString)) {
                 carStorageCapacity = Integer.parseInt(s.substring(carStorageCapacityString.length()+1));
             } else {
                 carStorageCapacity = DEFAULT_CAPACITY;
             }
             s = reader.readLine();
+            System.out.println(s);
             if(s.substring(0,accessorySuppliersNumberString.length()).equals(accessorySuppliersNumberString)) {
                 accessorySuppliersNumber = Integer.parseInt(s.substring(accessorySuppliersNumberString.length()+1));
             } else {
                 accessorySuppliersNumber = DEFAULT_NUMBER;
             }
             s = reader.readLine();
+            System.out.println(s);
             if(s.substring(0,numberOfWorkersString.length()).equals(numberOfWorkersString)) {
                 numberOfWorkers = Integer.parseInt(s.substring(numberOfWorkersString.length()+1));
             } else {
                 numberOfWorkers = DEFAULT_NUMBER;
             }
             s = reader.readLine();
+            System.out.println(s);
             if(s.substring(0,dealersNumberString.length()).equals(dealersNumberString)) {
                 dealersNumber = Integer.parseInt(s.substring(dealersNumberString.length()+1));
             } else {
                 dealersNumber = DEFAULT_NUMBER;
             }
             s = reader.readLine();
+            System.out.println(s);
             if(s.substring(0,toLogString.length()).equals(toLogString)) {
-                if(s.substring(dealersNumberString.length()+1).equals("true")) {
+                if(s.substring(toLogString.length()+1).equals("true")) {
                     toLog = true;
                 } else {
                     toLog = false;

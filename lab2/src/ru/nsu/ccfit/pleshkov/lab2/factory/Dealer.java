@@ -19,7 +19,7 @@ public class Dealer implements Runnable, Observable {
                     notifyObservers();
                 }
                 try {
-                    logger.log(number, car);
+                    //logger.log(number, car);
                 } catch (Exception e) {
 
                 }
