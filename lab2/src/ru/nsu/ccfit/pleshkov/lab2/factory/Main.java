@@ -12,10 +12,14 @@ import java.nio.file.Paths;
 
 public class Main {
     public static void main(String[] args) throws IOException {
+        if(args.length < 1) {
+            System.out.println("Usage: java -jar Factroy.jar ./path/config.txt");
+            System.exit(0);
+        }
         try {
-            Initializer.startFactory(Paths.get("/home/vl/lab2cnf"));
+            Initializer.startFactory(Paths.get(args[0]));
         } catch (BadParseException e) {
-            System.out.println("Bad parse at:");
+            System.out.println(e.getMessage());
         }
     }
 

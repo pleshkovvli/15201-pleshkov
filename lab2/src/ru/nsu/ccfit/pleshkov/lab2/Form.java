@@ -93,7 +93,6 @@ public class Form extends JFrame {
         bodiesSleepTimeText.setText("Bodies Sleep Time");
         bodiesSlider.setMaximum(Controller.MAX_SLEEP_TIME);
         bodiesSlider.setMinimum(0);
-        enginesSleepTimeNumber.setPreferredSize(new Dimension(5, 5));
         enginesSleepTimeNumber.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -294,7 +293,7 @@ public class Form extends JFrame {
     }
 
     private void createUIComponents() {
-        // TODO: place custom component creation code here
+        
     }
 
     {

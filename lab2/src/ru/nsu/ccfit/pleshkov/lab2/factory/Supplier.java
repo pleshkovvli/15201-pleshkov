@@ -3,7 +3,6 @@ package ru.nsu.ccfit.pleshkov.lab2.factory;
 public class Supplier<T extends IDTraceable> implements Runnable {
     private Storage<T> storage;
     final private Class typeClass;
-    private Class[] argsClasses;
 
     public int getSleepTime() {
         return sleepTime;
@@ -15,11 +14,6 @@ public class Supplier<T extends IDTraceable> implements Runnable {
 
     private int sleepTime;
 
-    {
-        argsClasses = new Class[1];
-        argsClasses[0] = Integer.class;
-    }
-
     public void run() {
         try {
             while(true) {
@@ -28,8 +22,7 @@ public class Supplier<T extends IDTraceable> implements Runnable {
                 try {
                     detail = (T) typeClass.newInstance();
                 } catch (Exception e) {
-                    System.out.println(typeClass + " "  + argsClasses[0]);
-                    e.printStackTrace();
+                    System.err.println("Failed to cast: " + typeClass);
                 }
                 storage.enqueue(detail);
             }

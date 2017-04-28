@@ -2,9 +2,6 @@ package ru.nsu.ccfit.pleshkov.lab2.pool;
 
 import ru.nsu.ccfit.pleshkov.lab2.utils.BlockingQueue;
 
-//log4J
-//JavaLanguageSpecification
-
 public class ThreadPool {
     private Thread[] pool;
     private BlockingQueue<Runnable> queue = new BlockingQueue<>(100);

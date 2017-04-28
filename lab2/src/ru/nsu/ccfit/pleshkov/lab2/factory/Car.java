@@ -5,23 +5,37 @@ public class Car extends IDTraceable {
     final private Body body;
     final private Accessory accessory;
 
-    Car(Engine engine, Body body, Accessory accessory) {
+    Car(Engine engine, Body body, Accessory accessory) throws BadDetailException {
         super();
+        if(engine==null || body==null || accessory==null) {
+            String message = " failed to create car: ";
+            if(engine==null) {
+                message = message + "null engine ";
+            }
+            if(body==null) {
+                message = message + "null body ";
+            }
+            if(accessory==null) {
+                message = message + "null accessory ";
+            }
+            throw new BadDetailException(message);
+
+        }
         this.engine = engine;
         this.body = body;
         this.accessory = accessory;
     }
 
-    public long getBodyID() {
+    long getBodyID() {
         return body.getID();
     }
 
 
-    public long getEngineID() {
+    long getEngineID() {
         return engine.getID();
     }
 
-    public long getAccessoryID() {
+    long getAccessoryID() {
         return accessory.getID();
     }
 }

@@ -10,6 +10,8 @@ public class Worker implements Runnable {
         try {
             Car car = new Car(engineStorage.dequeue(),bodyStorage.dequeue(),accessoryStorage.dequeue());
             carStorage.enqueue(car);
+        } catch (BadDetailException e) {
+            System.err.println(Thread.currentThread().getName() + e.getMessage());
         } catch (InterruptedException e) {
 
         }

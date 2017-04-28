@@ -7,8 +7,6 @@ import java.io.*;
 import java.nio.file.Path;
 
 public class Initializer {
-    final static private int DEFAULT_CAPACITY = 100;
-    final static private int DEFAULT_NUMBER = 4;
     final static private int INIT_SLEEP_TIME = 100;
     final static private int NUMBER_OF_THREADS = 3;
 
@@ -32,33 +30,39 @@ public class Initializer {
 
     public static void startFactory(Path configFilePath) throws BadParseException {
         Initializer.parseConfig(configFilePath);
+
         Storage<Accessory> accessoryStorage = new Storage<>(accessoryStorageCapacity);
         Storage<Body> bodyStorage = new Storage<>(bodiesStorageCapacity);
         Storage<Engine> engineStorage = new Storage<>(enginesStorageCapacity);
         CarStorage carStorage = new CarStorage(carStorageCapacity);
+
         Supplier<Engine> engineSupplier = new Supplier<Engine>(engineStorage, Engine.class,INIT_SLEEP_TIME);
         Supplier<Body> bodiesSupplier = new Supplier<Body>(bodyStorage, Body.class,INIT_SLEEP_TIME);
-        Supplier<Accessory>[] accessorySuppliers = new Supplier[accessorySuppliersNumber];
-        Dealer[] dealers = new Dealer[dealersNumber];
+
         Thread[] threads = new Thread[dealersNumber + accessorySuppliersNumber + NUMBER_OF_THREADS];
         Factory factory = new Factory(accessoryStorage,bodyStorage,engineStorage,carStorage,numberOfWorkers);
-        threads[0] = new Thread(bodiesSupplier);
-        threads[1] = new Thread(engineSupplier);
-        threads[2] = new Thread(new CarStorageController(carStorage,factory));
+        threads[0] = new Thread(bodiesSupplier, "bodiesSupplier");
+        threads[1] = new Thread(engineSupplier, "engineSupplier");
+        threads[2] = new Thread(new CarStorageController(carStorage,factory), "CarStorageController");
+
         FactoryLogger logger = null;
         try {
             logger = new FactoryLogger();
             logger.setToLog(toLog);
         } catch (IOException e) {
-
+            System.err.println(e.getMessage());
         }
+
+        Supplier<Accessory>[] accessorySuppliers = new Supplier[accessorySuppliersNumber];
+        Dealer[] dealers = new Dealer[dealersNumber];
+
         for(int i = 0 ; i < dealers.length; i++) {
             dealers[i] = new Dealer(carStorage,logger,i);
-            threads[i + NUMBER_OF_THREADS] = new Thread(dealers[i]);
+            threads[i + NUMBER_OF_THREADS] = new Thread(dealers[i], "Dealer#" + String.valueOf(i));
         }
-        for(int i = 0 ; i<accessorySuppliers.length; i++) {
+        for(int i = 0 ; i < accessorySuppliers.length; i++) {
             accessorySuppliers[i] = new Supplier<Accessory>(accessoryStorage, Accessory.class,INIT_SLEEP_TIME);
-            threads[i + dealersNumber + NUMBER_OF_THREADS] = new Thread(accessorySuppliers[i]);
+            threads[i + dealersNumber + NUMBER_OF_THREADS] = new Thread(accessorySuppliers[i],"accessorySupplier#" + String.valueOf(i));
         }
         Form form = new Form();
         Controller controller = new Controller(accessoryStorage,bodyStorage,engineStorage,dealers,
@@ -71,57 +75,57 @@ public class Initializer {
 
     private static void parseConfig(Path configFilePath) throws BadParseException {
         try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(configFilePath.toFile())))) {
-            String s = reader.readLine();
-            if(s.substring(0,accessoryStorageCapacityString.length()).equals(accessoryStorageCapacityString)) {
-                accessoryStorageCapacity = Integer.parseInt(s.substring(accessoryStorageCapacityString.length()+1));
+            String line = reader.readLine();
+            if(line.substring(0,accessoryStorageCapacityString.length()).equals(accessoryStorageCapacityString)) {
+                accessoryStorageCapacity = Integer.parseInt(line.substring(accessoryStorageCapacityString.length()+1));
             } else {
-                accessoryStorageCapacity = DEFAULT_CAPACITY;
+                throw new BadParseException("Bad parse at: " + line);
             }
-            s = reader.readLine();
-            if(s.substring(0,bodiesStorageCapacityString.length()).equals(bodiesStorageCapacityString)) {
-                bodiesStorageCapacity = Integer.parseInt(s.substring(bodiesStorageCapacityString.length()+1));
+            line = reader.readLine();
+            if(line.substring(0,bodiesStorageCapacityString.length()).equals(bodiesStorageCapacityString)) {
+                bodiesStorageCapacity = Integer.parseInt(line.substring(bodiesStorageCapacityString.length()+1));
             } else {
-                bodiesStorageCapacity = DEFAULT_CAPACITY;
+                throw new BadParseException("Bad parse at: " + line);
             }
-            s = reader.readLine();
-            if(s.substring(0,enginesStorageCapacityString.length()).equals(enginesStorageCapacityString)) {
-                enginesStorageCapacity = Integer.parseInt(s.substring(enginesStorageCapacityString.length()+1));
+            line = reader.readLine();
+            if(line.substring(0,enginesStorageCapacityString.length()).equals(enginesStorageCapacityString)) {
+                enginesStorageCapacity = Integer.parseInt(line.substring(enginesStorageCapacityString.length()+1));
             } else {
-                enginesStorageCapacity = DEFAULT_CAPACITY;
+                throw new BadParseException("Bad parse at: " + line);
             }
-            s = reader.readLine();
-            if(s.substring(0,carStorageCapacityString.length()).equals(carStorageCapacityString)) {
-                carStorageCapacity = Integer.parseInt(s.substring(carStorageCapacityString.length()+1));
+            line = reader.readLine();
+            if(line.substring(0,carStorageCapacityString.length()).equals(carStorageCapacityString)) {
+                carStorageCapacity = Integer.parseInt(line.substring(carStorageCapacityString.length()+1));
             } else {
-                carStorageCapacity = DEFAULT_CAPACITY;
+                throw new BadParseException("Bad parse at: " + line);
             }
-            s = reader.readLine();
-            if(s.substring(0,accessorySuppliersNumberString.length()).equals(accessorySuppliersNumberString)) {
-                accessorySuppliersNumber = Integer.parseInt(s.substring(accessorySuppliersNumberString.length()+1));
+            line = reader.readLine();
+            if(line.substring(0,accessorySuppliersNumberString.length()).equals(accessorySuppliersNumberString)) {
+                accessorySuppliersNumber = Integer.parseInt(line.substring(accessorySuppliersNumberString.length()+1));
             } else {
-                accessorySuppliersNumber = DEFAULT_NUMBER;
+                throw new BadParseException("Bad parse at: " + line);
             }
-            s = reader.readLine();
-            if(s.substring(0,numberOfWorkersString.length()).equals(numberOfWorkersString)) {
-                numberOfWorkers = Integer.parseInt(s.substring(numberOfWorkersString.length()+1));
+            line = reader.readLine();
+            if(line.substring(0,numberOfWorkersString.length()).equals(numberOfWorkersString)) {
+                numberOfWorkers = Integer.parseInt(line.substring(numberOfWorkersString.length()+1));
             } else {
-                numberOfWorkers = DEFAULT_NUMBER;
+                throw new BadParseException("Bad parse at: " + line);
             }
-            s = reader.readLine();
-            if(s.substring(0,dealersNumberString.length()).equals(dealersNumberString)) {
-                dealersNumber = Integer.parseInt(s.substring(dealersNumberString.length()+1));
+            line = reader.readLine();
+            if(line.substring(0,dealersNumberString.length()).equals(dealersNumberString)) {
+                dealersNumber = Integer.parseInt(line.substring(dealersNumberString.length()+1));
             } else {
-                dealersNumber = DEFAULT_NUMBER;
+                throw new BadParseException("Bad parse at: " + line);
             }
-            s = reader.readLine();
-            if(s.substring(0,toLogString.length()).equals(toLogString)) {
-                if(s.substring(toLogString.length()+1).equals("true")) {
+            line = reader.readLine();
+            if(line.substring(0,toLogString.length()).equals(toLogString)) {
+                if(line.substring(toLogString.length()+1).equals("true")) {
                     toLog = true;
-                } else {
+                } else if(line.substring(toLogString.length()+1).equals("false")) {
                     toLog = false;
                 }
             } else {
-                toLog = false;
+                throw new BadParseException("Bad parse at: " + line);
             }
         } catch (IOException e) {
             throw new BadParseException("",e);

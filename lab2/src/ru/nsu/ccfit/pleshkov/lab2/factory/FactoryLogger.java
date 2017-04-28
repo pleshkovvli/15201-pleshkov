@@ -41,6 +41,9 @@ public class FactoryLogger implements Observer {
                 writer.close();
             }
         }
+        for(int i = 1; i <= 10; i++) {
+            Files.deleteIfExists(Paths.get(LOG_FILE_NAME + "." + String.valueOf(i)));
+        }
         logger = Logger.getLogger(FactoryLogger.class);
     }
 
