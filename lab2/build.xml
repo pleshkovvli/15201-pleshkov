@@ -14,6 +14,8 @@
 
     <path id="classpath">
         <fileset dir="${log.dir}" includes="log4j-1.2.17.jar"/>
+        <fileset dir="." includes="javac2-7.0.3.jar"/>
+        <fileset dir="." includes="log4j.xml"/>
     </path>
 
     <target name="do">
@@ -25,6 +27,8 @@
         <javac srcdir="${srctest.dir}" classpath="{junit.dir}/junit-4.12.jar:${classes.dir}" destdir="${tests.dir}"/>
         <jar destfile="Factory.jar" basedir="${classes.dir}">
             <zipgroupfileset dir="${log.dir}" includes="*.jar" />
+            <zipgroupfileset dir="." includes="*.jar" />
+            <fileset dir="." includes="log4j.xml" />
             <manifest>
                 <attribute name="Main-Class" value="ru.nsu.ccfit.pleshkov.lab2.factory.Main"/>
             </manifest>

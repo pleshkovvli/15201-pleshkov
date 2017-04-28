@@ -4,8 +4,4 @@ import java.io.IOException;
 
 public interface Observer {
     void update(int newData);
-
-    default void log(int dealerNumber, Car car) throws IOException {
-
-    };
 }

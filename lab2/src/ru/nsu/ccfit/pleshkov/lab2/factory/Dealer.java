@@ -5,8 +5,13 @@ import java.util.LinkedList;
 public class Dealer implements Runnable, Observable {
     private CarStorage storage;
     private int profit = 0;
-    private FactoryLogger logger;
     private int number;
+
+    public void setLogger(FactoryLogger logger) {
+        this.logger = logger;
+    }
+
+    private FactoryLogger logger = null;
 
     private LinkedList<Observer> observers = new LinkedList<>();
 
@@ -18,10 +23,12 @@ public class Dealer implements Runnable, Observable {
                     profit++;
                     notifyObservers();
                 }
-                try {
-                    //logger.log(number, car);
-                } catch (Exception e) {
+                if(logger!=null) {
+                    try {
+                        logger.log(number, car);
+                    } catch (Exception e) {
 
+                    }
                 }
             } catch (InterruptedException e) {
                 break;
@@ -29,9 +36,14 @@ public class Dealer implements Runnable, Observable {
         }
     }
 
-    Dealer(CarStorage storage, FactoryLogger logger, int number) {
-        this.storage = storage;
+    Dealer(CarStorage storage, FactoryLogger logger, int number)  {
         this.logger = logger;
+        this.storage = storage;
+        this.number = number;
+    }
+
+    Dealer(CarStorage storage, int number)  {
+        this.storage = storage;
         this.number = number;
     }
 

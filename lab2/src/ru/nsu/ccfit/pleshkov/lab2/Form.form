@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="Panel" layout-manager="GridLayoutManager" row-count="7" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="0">
     <margin top="20" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="114" y="20" width="448" height="340"/>
+      <xy x="114" y="20" width="523" height="340"/>
     </constraints>
     <properties/>
     <border type="etched" title="Factory"/>
@@ -148,6 +148,14 @@
           <grid row="4" column="3" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
       </hspacer>
+      <component id="414fd" class="javax.swing.JCheckBox" binding="logBox">
+        <constraints>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="CheckBox"/>
+        </properties>
+      </component>
     </children>
   </grid>
 </form>

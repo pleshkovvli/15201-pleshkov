@@ -15,6 +15,7 @@ public class Controller {
     private Supplier<Accessory>[] accessoriesSuppliers;
     private Thread[] threads;
     private Factory factory;
+    private FactoryLogger logger;
 
     public static final int MAX_SLEEP_TIME = 2000;
 
@@ -22,7 +23,9 @@ public class Controller {
 
     public Controller(Storage<Accessory> accessoryStorage, Storage<Body> bodyStorage, Storage<Engine> engineStorage,
                      Dealer[] dealers, Supplier<Engine> engineSupplier,Supplier<Body> bodiesSupplier,
-                      Supplier<Accessory>[] accessorySuppliers, Form form, Thread[] threads, Factory factory) {
+                      Supplier<Accessory>[] accessorySuppliers, Form form, Thread[] threads,
+                      Factory factory, FactoryLogger logger) {
+        this.logger = logger;
         this.factory = factory;
         this.threads = threads;
         this.engineSupplier = engineSupplier;
@@ -114,11 +117,18 @@ public class Controller {
         }
     };
 
+    public void setLogging(boolean toLog) {
+        logger.setToLog(toLog);
+    }
+
+    public boolean getLogging() {
+        return logger.isToLog();
+    }
+
     public void finish() {
         for(Thread thread : threads)  {
             thread.interrupt();
         }
         factory.stop();
-        System.out.println('e');
     }
 }
