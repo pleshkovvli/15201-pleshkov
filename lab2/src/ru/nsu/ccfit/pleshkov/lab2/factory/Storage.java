@@ -2,10 +2,10 @@ package ru.nsu.ccfit.pleshkov.lab2.factory;
 
 import ru.nsu.ccfit.pleshkov.lab2.utils.BlockingQueue;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 
-public class Storage<T> extends BlockingQueue<T> implements Observable {
-    private LinkedList<Observer> observers = new LinkedList<>();
+class Storage<T> extends BlockingQueue<T> implements Observable {
+    private ArrayList<Observer> observers = new ArrayList<>();
 
     Storage(int capacity) {
         super(capacity);
@@ -15,6 +15,13 @@ public class Storage<T> extends BlockingQueue<T> implements Observable {
         T item = super.dequeue();
         notifyObservers();
         return item;
+    }
+
+    @Override
+    public void removeObserver(Observer observer) {
+        if(observers.contains(observer)) {
+            observers.remove(observer);
+        }
     }
 
     @Override

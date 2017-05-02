@@ -1,0 +1,8 @@
+accessoryStorageCapacity=100
+bodiesStorageCapacity=200
+enginesStorageCapacity=300
+carStorageCapacity=500
+accessorySuppliersNumber=40
+numberOfWorkers=40
+dealersNumber=40
+toLog=true

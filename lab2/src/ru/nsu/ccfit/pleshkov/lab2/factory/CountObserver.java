@@ -1,18 +1,23 @@
 package ru.nsu.ccfit.pleshkov.lab2.factory;
 
-public class CountObserver<T extends Observable> implements Observer {
-    public int getCount() {
+import javax.swing.*;
+
+abstract class CountObserver implements Observer {
+    int getCount() {
         return count;
     }
 
     private int count;
 
+    abstract protected void specificJob();
+
     @Override
     public void update(int newData) {
         count = newData;
+        SwingUtilities.invokeLater(this::specificJob);
     }
 
-    public CountObserver(T observable) {
+    CountObserver(Observable observable) {
         observable.addObserver(this);
     }
 }

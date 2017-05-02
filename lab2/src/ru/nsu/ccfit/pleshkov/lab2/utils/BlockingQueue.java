@@ -1,7 +1,6 @@
 package ru.nsu.ccfit.pleshkov.lab2.utils;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 public class BlockingQueue<T> {

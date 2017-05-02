@@ -4,11 +4,10 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-public class FactoryLogger implements Observer {
+class FactoryLogger implements Observer {
     private static final String LOG_FILE_NAME = "factory.log";
     private static final String DELIMITER = ": ";
     private static final String SPACE = " ";
@@ -19,11 +18,11 @@ public class FactoryLogger implements Observer {
     private static final String MOTOR = "Motor";
     private static final String ACCESSORY = "Accessory";
 
-    public boolean isToLog() {
+    boolean isToLog() {
         return toLog;
     }
 
-    public void setToLog(boolean toLog) {
+    void setToLog(boolean toLog) {
         this.toLog = toLog;
     }
 
@@ -31,18 +30,10 @@ public class FactoryLogger implements Observer {
 
     private static Logger logger;
 
-    public FactoryLogger() throws IOException {
+    FactoryLogger() throws IOException {
         PropertyConfigurator.configure("log4j.properties");
         if(!Files.exists(Paths.get(LOG_FILE_NAME))) {
             Files.createFile(Paths.get(LOG_FILE_NAME));
-        } else {
-            try(PrintWriter writer = new PrintWriter(Paths.get(LOG_FILE_NAME).toFile())) {
-                writer.print("");
-                writer.close();
-            }
-        }
-        for(int i = 1; i <= 10; i++) {
-            Files.deleteIfExists(Paths.get(LOG_FILE_NAME + "." + String.valueOf(i)));
         }
         logger = Logger.getLogger(FactoryLogger.class);
     }
@@ -51,14 +42,22 @@ public class FactoryLogger implements Observer {
 
     }
 
-    public void log(int DealerNumber, Car car)  {
+    void log(int DealerNumber, Car car)  {
         if(!toLog) {
             return;
         }
-        logger.info(DEALER + SPACE + String.valueOf(DealerNumber) + DELIMITER
-                + AUTO + SPACE + car.getID() + SPACE + "("
-                + BODY + DELIMITER + car.getBodyID() + COMMA
-                + MOTOR + DELIMITER + car.getEngineID() + COMMA
-                + ACCESSORY + SPACE + car.getAccessoryID() + ")");
+        try {
+            logger.info(DEALER + SPACE + String.valueOf(DealerNumber) + DELIMITER
+                    + AUTO + SPACE + car.getID() + SPACE + "("
+                    + BODY + DELIMITER + car.getBodyID() + COMMA
+                    + MOTOR + DELIMITER + car.getEngineID() + COMMA
+                    + ACCESSORY + SPACE + car.getAccessoryID() + ")");
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+    }
+
+    void simpleLog(String s) {
+        logger.info(s);
     }
 }

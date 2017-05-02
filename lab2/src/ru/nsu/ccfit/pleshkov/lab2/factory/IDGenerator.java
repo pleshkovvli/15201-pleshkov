@@ -1,9 +1,11 @@
 package ru.nsu.ccfit.pleshkov.lab2.factory;
 
-public class IDGenerator {
-    private long currentID = 1;
+import java.util.concurrent.atomic.AtomicLong;
 
-    public long getID() {
-        return currentID++;
+class IDGenerator {
+    private AtomicLong currentID = new AtomicLong(1);
+
+    long getID() {
+        return currentID.getAndIncrement();
     }
 }

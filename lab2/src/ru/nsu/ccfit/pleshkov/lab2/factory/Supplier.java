@@ -1,14 +1,14 @@
 package ru.nsu.ccfit.pleshkov.lab2.factory;
 
-public class Supplier<T extends IDTraceable> implements Runnable {
+class Supplier<T extends IDTraceable> implements Runnable {
     private Storage<T> storage;
     final private Class typeClass;
 
-    public int getSleepTime() {
+    int getSleepTime() {
         return sleepTime;
     }
 
-    public void setSleepTime(int sleepTime) {
+    void setSleepTime(int sleepTime) {
         this.sleepTime = sleepTime;
     }
 
@@ -16,7 +16,7 @@ public class Supplier<T extends IDTraceable> implements Runnable {
 
     public void run() {
         try {
-            while(true) {
+            while(!Thread.interrupted()) {
                 Thread.sleep(sleepTime);
                 T detail = null;
                 try {

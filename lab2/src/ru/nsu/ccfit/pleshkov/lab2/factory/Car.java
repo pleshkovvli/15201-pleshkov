@@ -1,6 +1,12 @@
 package ru.nsu.ccfit.pleshkov.lab2.factory;
 
-public class Car extends IDTraceable {
+class Car extends IDTraceable {
+    final private static IDGenerator generator = new IDGenerator();
+
+    long setID() {
+        return generator.getID();
+    }
+
     final private Engine engine;
     final private Body body;
     final private Accessory accessory;

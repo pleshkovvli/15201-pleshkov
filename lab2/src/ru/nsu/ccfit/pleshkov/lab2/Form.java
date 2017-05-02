@@ -1,23 +1,26 @@
 package ru.nsu.ccfit.pleshkov.lab2;
 
-import ru.nsu.ccfit.pleshkov.lab2.controller.Controller;
+import ru.nsu.ccfit.pleshkov.lab2.factory.FormStartObjects;
+import ru.nsu.ccfit.pleshkov.lab2.factory.Initializer;
+import ru.nsu.ccfit.pleshkov.lab2.factory.Observable;
+import ru.nsu.ccfit.pleshkov.lab2.factory.Observer;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
 
 public class Form extends JFrame {
     private JPanel Panel;
     private JLabel numberOfBodies;
     private JLabel numberOfEngines;
-    private JLabel textEngines;
     private JLabel numberOfAccessories;
+    private JLabel numberOfProfit;
+    private JLabel textEngines;
     private JLabel textBodies;
     private JLabel textAccessories;
     private JLabel textProfit;
-    private JLabel numberOfProfit;
     private JTextField enginesSleepTimeNumber;
     private JSlider enginesSlider;
     private JLabel enginesSleepTimeText;
@@ -27,253 +30,61 @@ public class Form extends JFrame {
     private JLabel bodiesSleepTimeText;
     private JTextField bodiesSleepTimeNumber;
     private JSlider bodiesSlider;
-    private JCheckBox logBox;
+    private JCheckBox checkBox;
+
+    private TextAndSlider accessoriesSleep;
+    private TextAndSlider bodiesSleep;
+    private TextAndSlider enginesSleep;
+    private LogBox logBox;
 
     private String labelDelimiter = " / ";
 
-    public void setNumberOfDealers(int numberOfDealers) {
-        this.numberOfDealers = numberOfDealers;
-        numberOfDealersString = " by " + numberOfDealers + " dealers";
-    }
-
-    private int numberOfDealers;
     private String numberOfDealersString;
-
-
-    public void setNumberOfAccessoriesSuppliers(int numberOfAccessoriesSuppliers) {
-        this.numberOfAccessoriesSuppliers = numberOfAccessoriesSuppliers;
-        accessoriesStorageCapacityString = labelDelimiter + String.valueOf(accessoriesStorageCapacity)
-                + " by " + String.valueOf(numberOfAccessoriesSuppliers) + " suppliers";
-    }
-
-    private int numberOfAccessoriesSuppliers;
-    private String numberOfAccessoriesSuppliersString;
-
-    public void setAccessoriesStorageCapacity(int accessoriesStorageCapacity) {
-        this.accessoriesStorageCapacity = accessoriesStorageCapacity;
-        accessoriesStorageCapacityString = labelDelimiter + String.valueOf(accessoriesStorageCapacity)
-                + " by " + String.valueOf(numberOfAccessoriesSuppliers) + " suppliers";
-    }
-
-    private int accessoriesStorageCapacity;
     private String accessoriesStorageCapacityString;
-
-    public void setBodiesStorageCapacity(int bodiesStorageCapacity) {
-        this.bodiesStorageCapacity = bodiesStorageCapacity;
-        bodiesStorageCapacityString = labelDelimiter + String.valueOf(bodiesStorageCapacity);
-    }
-
-    private int bodiesStorageCapacity;
     private String bodiesStorageCapacityString;
-
-    public void setEnginesStorageCapacity(int enginesStorageCapacity) {
-        this.enginesStorageCapacity = enginesStorageCapacity;
-        enginesStorageCapacityString = labelDelimiter + String.valueOf(enginesStorageCapacity);
-    }
-
-    private int enginesStorageCapacity;
     private String enginesStorageCapacityString;
 
-    private Controller controller;
+    private static final String numberOfEnginesString = "Number of engines:";
+    private static final String numberOfBodiesString = "Number of bodies:";
+    private static final String numberOfAccessoriesString = "Number of accessories:";
+    private static final String profitString = "PROFIT:";
+    private static final String enginesSleepTimeString = "Engines Sleep Time";
+    private static final String accessoriesSleepTimeString = "Accessories Sleep Time";
+    private static final String bodiesSleepTimeString = "Bodies Sleep Time";
 
-    public Form() {
+    public Form(FormStartObjects startObjects) {
+        numberOfDealersString = " by " + startObjects.getNumberOfDealers() + " dealers";
+        accessoriesStorageCapacityString = labelDelimiter + String.valueOf(startObjects.getAccessoriesStorageCapacity())
+                + " by " + String.valueOf(startObjects.getNumberOfAccessoriesSuppliers()) + " suppliers";
+        bodiesStorageCapacityString = labelDelimiter + String.valueOf(startObjects.getBodiesStorageCapacity());
+        enginesStorageCapacityString = labelDelimiter + String.valueOf(startObjects.getEnginesStorageCapacity());
         setBounds(400, 200, 600, 500);
         setContentPane(Panel);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        textEngines.setText("Number of engines:");
-        textBodies.setText("Number of bodies:");
-        textAccessories.setText("Number of accessories:");
-        textProfit.setText("PROFIT:");
-        enginesSleepTimeText.setText("Engines Sleep Time");
-        enginesSlider.setMaximum(Controller.MAX_SLEEP_TIME);
-        enginesSlider.setMinimum(0);
-        accessoriesSleepTimeText.setText("Accessories Sleep Time");
-        accessoriesSlider.setMaximum(Controller.MAX_SLEEP_TIME);
-        accessoriesSlider.setMinimum(0);
-        bodiesSleepTimeText.setText("Bodies Sleep Time");
-        bodiesSlider.setMaximum(Controller.MAX_SLEEP_TIME);
-        bodiesSlider.setMinimum(0);
-        enginesSleepTimeNumber.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String sleep = enginesSleepTimeNumber.getText();
-                if (sleep != null && !sleep.isEmpty()) {
-                    int sl = -1;
-                    try {
-                        sl = Integer.parseInt(sleep);
-                    } catch (NumberFormatException ex) {
+        textEngines.setText(numberOfEnginesString);
+        textBodies.setText(numberOfBodiesString);
+        textAccessories.setText(numberOfAccessoriesString);
+        textProfit.setText(profitString);
+        enginesSleepTimeText.setText(enginesSleepTimeString);
+        accessoriesSleepTimeText.setText(accessoriesSleepTimeString);
+        bodiesSleepTimeText.setText(bodiesSleepTimeString);
+        bodiesSleep = new TextAndSlider(bodiesSleepTimeNumber, bodiesSlider);
+        bodiesSleep.addObserver(startObjects.getBodiesSleepObserver());
+        enginesSleep = new TextAndSlider(enginesSleepTimeNumber, enginesSlider);
+        enginesSleep.addObserver(startObjects.getEnginesSleepObserver());
+        accessoriesSleep = new TextAndSlider(accessoriesSleepTimeNumber, accessoriesSlider);
+        accessoriesSleep.addObserver(startObjects.getAccessoriesSleepObserver());
+        logBox = new LogBox(checkBox, startObjects.isToLog());
+        logBox.addObserver(startObjects.getLoggingObserver());
 
-                    }
-                    if ((sl >= 0) && (sl <= Controller.MAX_SLEEP_TIME)) {
-                        setEnginesSlider(sl);
-                    }
-                    controller.changeEnginesSleepTime(sl);
-                }
-            }
-        });
-        enginesSlider.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                int sleep = enginesSlider.getValue();
-                if ((sleep >= 0) && (sleep <= Controller.MAX_SLEEP_TIME)) {
-                    setEnginesSleepTimeNumber(sleep);
-                }
-
-                controller.changeEnginesSleepTime(sleep);
-            }
-
-        });
-
-        accessoriesSleepTimeNumber.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String sleep = accessoriesSleepTimeNumber.getText();
-                if (sleep != null && !sleep.isEmpty()) {
-                    int sl = -1;
-                    try {
-                        sl = Integer.parseInt(sleep);
-                    } catch (NumberFormatException ex) {
-
-                    }
-                    if ((sl >= 0) && (sl <= Controller.MAX_SLEEP_TIME)) {
-                        setAccessoriesSlider(sl);
-                    }
-                    controller.changeAccessoriesSleepTime(sl);
-                }
-            }
-        });
-        accessoriesSlider.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                int sleep = accessoriesSlider.getValue();
-                if ((sleep >= 0) && (sleep <= Controller.MAX_SLEEP_TIME)) {
-                    setAccessoriesSleepTimeNumber(sleep);
-                }
-                controller.changeAccessoriesSleepTime(sleep);
-            }
-
-        });
-
-        bodiesSleepTimeNumber.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String sleep = bodiesSleepTimeNumber.getText();
-                if (sleep != null && !sleep.isEmpty()) {
-                    int sl = -1;
-                    try {
-                        sl = Integer.parseInt(sleep);
-                    } catch (NumberFormatException ex) {
-
-                    }
-                    if ((sl >= 0) && (sl <= Controller.MAX_SLEEP_TIME)) {
-                        setBodiesSlider(sl);
-                    }
-                    controller.changeBodiesSleepTime(sl);
-                }
-            }
-        });
-        bodiesSlider.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-
-                int sleep = bodiesSlider.getValue();
-                if ((sleep >= 0) && (sleep <= Controller.MAX_SLEEP_TIME)) {
-                    setBodiesSleepTimeNumber(sleep);
-                }
-                controller.changeBodiesSleepTime(sleep);
-            }
-
-        });
-        logBox.setText("Logging");
         this.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                controller.finish();
+                Initializer.finish();
                 Form.this.dispose();
             }
         });
         setVisible(true);
-    }
-
-    public void setEnginesSleep(int sleep) {
-        setEnginesSleepTimeNumber(sleep);
-        setEnginesSlider(sleep);
-    }
-
-    private void setEnginesSleepTimeNumber(int sleep) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                enginesSleepTimeNumber.setText(String.valueOf(sleep));
-            }
-        });
-    }
-
-    private void setEnginesSlider(int sleep) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                enginesSlider.setValue(sleep);
-            }
-        });
-    }
-
-    public void setAccessoriesSleep(int sleep) {
-        setAccessoriesSleepTimeNumber(sleep);
-        setAccessoriesSlider(sleep);
-    }
-
-    private void setAccessoriesSleepTimeNumber(int sleep) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                accessoriesSleepTimeNumber.setText(String.valueOf(sleep));
-            }
-        });
-    }
-
-    private void setAccessoriesSlider(int sleep) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                accessoriesSlider.setValue(sleep);
-            }
-        });
-    }
-
-    public void setBodiesSleep(int sleep) {
-        setBodiesSleepTimeNumber(sleep);
-        setBodiesSlider(sleep);
-    }
-
-    private void setBodiesSleepTimeNumber(int sleep) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                bodiesSleepTimeNumber.setText(String.valueOf(sleep));
-            }
-        });
-    }
-
-    private void setBodiesSlider(int sleep) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                bodiesSlider.setValue(sleep);
-            }
-        });
-    }
-
-    public void setController(Controller controller) {
-        this.controller = controller;
-        logBox.setSelected(controller.getLogging());
-        logBox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                controller.setLogging(!controller.getLogging());
-            }
-        });
-
     }
 
     public void updateNumberOfBodies(int newData) {
@@ -290,10 +101,6 @@ public class Form extends JFrame {
 
     public void updateProfit(int newData) {
         numberOfProfit.setText(String.valueOf(newData) + numberOfDealersString);
-    }
-
-    private void createUIComponents() {
-        
     }
 
     {
@@ -363,9 +170,9 @@ public class Form extends JFrame {
         Panel.add(spacer1, new com.intellij.uiDesigner.core.GridConstraints(4, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_HORIZONTAL, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
         final com.intellij.uiDesigner.core.Spacer spacer2 = new com.intellij.uiDesigner.core.Spacer();
         Panel.add(spacer2, new com.intellij.uiDesigner.core.GridConstraints(4, 3, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_HORIZONTAL, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
-        logBox = new JCheckBox();
-        logBox.setText("CheckBox");
-        Panel.add(logBox, new com.intellij.uiDesigner.core.GridConstraints(1, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_WEST, com.intellij.uiDesigner.core.GridConstraints.FILL_NONE, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        checkBox = new JCheckBox();
+        checkBox.setText("CheckBox");
+        Panel.add(checkBox, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_WEST, com.intellij.uiDesigner.core.GridConstraints.FILL_NONE, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     }
 
     /**
@@ -374,4 +181,110 @@ public class Form extends JFrame {
     public JComponent $$$getRootComponent$$$() {
         return Panel;
     }
+
+    private class LogBox implements Observable {
+        private JCheckBox box;
+
+        private ArrayList<Observer> observers = new ArrayList<>();
+
+        @Override
+        public void removeObserver(Observer observer) {
+            if (observers.contains(observer)) {
+                observers.remove(observer);
+            }
+        }
+
+        @Override
+        public void addObserver(Observer observer) {
+            observers.add(observer);
+        }
+
+        @Override
+        public void notifyObservers() {
+            for (Observer observer : observers) {
+                if (observer != null) {
+                    observer.update(0);
+                }
+            }
+        }
+
+        LogBox(JCheckBox box, boolean toLog) {
+            this.box = box;
+            box.setText("Logging");
+            box.setSelected(toLog);
+            box.addActionListener((ActionEvent e) -> notifyObservers());
+        }
+    }
+
+    private class TextAndSlider implements Observable {
+        private JTextField text;
+        private JSlider slider;
+
+        private int sleepTime;
+        private int maximumValue;
+
+        private ArrayList<Observer> observers = new ArrayList<>();
+
+
+        @Override
+        public void removeObserver(Observer observer) {
+            if (observers.contains(observer)) {
+                observers.remove(observer);
+            }
+        }
+
+        @Override
+        public void addObserver(Observer observer) {
+            observers.add(observer);
+        }
+
+        @Override
+        public void notifyObservers() {
+            for (Observer observer : observers) {
+                if (observer != null) {
+                    observer.update(sleepTime);
+                }
+            }
+        }
+
+        TextAndSlider(JTextField text, JSlider slider) {
+            this.text = text;
+            this.slider = slider;
+            this.maximumValue = Initializer.MAX_SLEEP_TIME;
+            slider.setMaximum(maximumValue);
+            slider.setMinimum(0);
+            slider.setValue(Initializer.INIT_SLEEP_TIME);
+            text.setText(String.valueOf(Initializer.INIT_SLEEP_TIME));
+            text.addActionListener((ActionEvent e) -> {
+                String sleep = text.getText();
+                if (sleep != null && !sleep.isEmpty()) {
+                    try {
+                        int sl = Integer.parseInt(sleep);
+                        if (sl < 0 || sl > maximumValue) {
+                            SwingUtilities.invokeLater(() -> text.setForeground(Color.RED));
+                            return;
+                        }
+                        if (text.getForeground() == Color.RED) {
+                            SwingUtilities.invokeLater(() -> text.setForeground(Color.BLACK));
+                        }
+                        slider.setValue(sl);
+                        sleepTime = sl;
+                        notifyObservers();
+                    } catch (NumberFormatException ex) {
+                        SwingUtilities.invokeLater(() -> text.setForeground(Color.RED));
+                    }
+                }
+            });
+            slider.addChangeListener((ChangeEvent e) -> {
+                sleepTime = slider.getValue();
+                SwingUtilities.invokeLater(() -> text.setText(String.valueOf(sleepTime)));
+                notifyObservers();
+            });
+        }
+    }
+
+    private void createUIComponents() {
+
+    }
+
 }

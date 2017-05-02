@@ -2,7 +2,7 @@ package ru.nsu.ccfit.pleshkov.lab2.factory;
 
 import java.util.LinkedList;
 
-public class Dealer implements Runnable, Observable {
+class Dealer implements Runnable, Observable {
     private CarStorage storage;
     private int profit = 0;
     private int number;
@@ -16,19 +16,15 @@ public class Dealer implements Runnable, Observable {
     private LinkedList<Observer> observers = new LinkedList<>();
 
     public void run() {
-        while(true) {
+        while(!Thread.interrupted()) {
             try {
                 Car car = storage.dequeue();
                 if(car!=null) {
                     profit++;
                     notifyObservers();
                 }
-                if(logger!=null) {
-                    try {
-                        logger.log(number, car);
-                    } catch (Exception e) {
-
-                    }
+                if(logger != null) {
+                    logger.log(number, car);
                 }
             } catch (InterruptedException e) {
                 break;
@@ -49,6 +45,13 @@ public class Dealer implements Runnable, Observable {
 
     private int getProfit() {
         return profit;
+    }
+
+    @Override
+    public void removeObserver(Observer observer) {
+        if(observers.contains(observer)) {
+            observers.remove(observer);
+        }
     }
 
     @Override

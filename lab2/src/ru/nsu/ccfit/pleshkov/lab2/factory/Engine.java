@@ -1,5 +1,9 @@
 package ru.nsu.ccfit.pleshkov.lab2.factory;
 
-public class Engine extends IDTraceable {
+class Engine extends IDTraceable {
+    final private static IDGenerator generator = new IDGenerator();
 
+    long setID() {
+        return generator.getID();
+    }
 }

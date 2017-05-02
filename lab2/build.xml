@@ -8,14 +8,13 @@
     <property name="classes.dir" value="${build.dir}/classes"/>
     <property name="tests.dir" value="${build.dir}/tests"/>
     <property name="junit.dir" value="junit"/>
-    <property name="log.dir" value="log4j"/>
+    <property name="lib.dir" value="libs"/>
     <property name="src.dir" value="src"/>
     <property name="srctest.dir" value="test"/>
 
     <path id="classpath">
-        <fileset dir="${log.dir}" includes="log4j-1.2.17.jar"/>
-        <fileset dir="." includes="javac2-7.0.3.jar"/>
-        <fileset dir="." includes="log4j.xml"/>
+        <fileset dir="${lib.dir}" includes="log4j-1.2.17.jar"/>
+        <fileset dir="${lib.dir}" includes="javac2-7.0.3.jar"/>
     </path>
 
     <target name="do">
@@ -23,12 +22,12 @@
         <delete file="Factory.jar"/>
         <mkdir dir="${classes.dir}"/>
         <mkdir dir="${tests.dir}"/>
-        <javac srcdir="${src.dir}" classpathref="classpath" includeantruntime="false" destdir="${classes.dir}"/>
+        <javac fork="true" srcdir="${src.dir}" classpathref="classpath" includeantruntime="false" destdir="${classes.dir}">
+            <compilerarg line="" />
+        </javac>
         <javac srcdir="${srctest.dir}" classpath="{junit.dir}/junit-4.12.jar:${classes.dir}" destdir="${tests.dir}"/>
         <jar destfile="Factory.jar" basedir="${classes.dir}">
-            <zipgroupfileset dir="${log.dir}" includes="*.jar" />
-            <zipgroupfileset dir="." includes="*.jar" />
-            <fileset dir="." includes="log4j.xml" />
+            <zipgroupfileset dir="${lib.dir}" includes="*.jar" />
             <manifest>
                 <attribute name="Main-Class" value="ru.nsu.ccfit.pleshkov.lab2.factory.Main"/>
             </manifest>

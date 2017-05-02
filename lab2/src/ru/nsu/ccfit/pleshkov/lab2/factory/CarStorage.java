@@ -1,6 +1,6 @@
 package ru.nsu.ccfit.pleshkov.lab2.factory;
 
-public class CarStorage extends Storage<Car> {
+class CarStorage extends Storage<Car> {
     private Object viewLock = new Object();
     private boolean isChanged = true;
 

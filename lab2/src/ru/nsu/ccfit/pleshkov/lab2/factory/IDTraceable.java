@@ -1,12 +1,13 @@
 package ru.nsu.ccfit.pleshkov.lab2.factory;
 
-abstract public class IDTraceable {
+abstract class IDTraceable {
     final private long id;
-    final static private IDGenerator generator = new IDGenerator();
 
     IDTraceable() {
-        this.id = generator.getID();
+        this.id = setID();
     }
+
+    abstract long setID();
 
     long getID() {
         return id;
