@@ -17,6 +17,14 @@
         <fileset dir="${lib.dir}" includes="javac2-7.0.3.jar"/>
     </path>
 
+    <path id="classpath.test">
+        <fileset dir="${lib.dir}" includes="log4j-1.2.17.jar"/>
+        <fileset dir="${lib.dir}" includes="javac2-7.0.3.jar"/>
+        <pathelement location="${junit.dir}/junit-4.12.jar"/>
+        <pathelement location="${junit.dir}/hamcrest-core-1.3.jar"/>
+        <pathelement location="${classes.dir}"/>
+    </path>
+
     <target name="do">
         <delete dir="${build.dir}"/>
         <delete file="Factory.jar"/>
@@ -25,7 +33,7 @@
         <javac fork="true" srcdir="${src.dir}" classpathref="classpath" includeantruntime="false" destdir="${classes.dir}">
             <compilerarg line="" />
         </javac>
-        <javac srcdir="${srctest.dir}" classpath="{junit.dir}/junit-4.12.jar:${classes.dir}" destdir="${tests.dir}"/>
+        <javac srcdir="${srctest.dir}" classpathref="classpath.test" destdir="${tests.dir}"/>
         <jar destfile="Factory.jar" basedir="${classes.dir}">
             <zipgroupfileset dir="${lib.dir}" includes="*.jar" />
             <manifest>
@@ -34,12 +42,6 @@
         </jar>
 
     </target>
-
-    <path id="classpath.test">
-        <pathelement location="${junit.dir}/junit-4.12.jar"/>
-        <pathelement location="${junit.dir}/hamcrest-core-1.3.jar"/>
-        <pathelement location="${classes.dir}"/>
-    </path>
 
     <target name="test" >
         <junit printsummary="on" haltonfailure="yes" fork="true">

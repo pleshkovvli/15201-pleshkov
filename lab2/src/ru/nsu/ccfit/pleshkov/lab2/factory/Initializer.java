@@ -20,6 +20,38 @@ public class Initializer {
     final static private String dealersNumberString = "dealersNumber";
     final static private String toLogString = "toLog";
 
+    public static int getAccessoryStorageCapacity() {
+        return accessoryStorageCapacity;
+    }
+
+    public static int getBodiesStorageCapacity() {
+        return bodiesStorageCapacity;
+    }
+
+    public static int getEnginesStorageCapacity() {
+        return enginesStorageCapacity;
+    }
+
+    public static int getCarStorageCapacity() {
+        return carStorageCapacity;
+    }
+
+    public static int getAccessorySuppliersNumber() {
+        return accessorySuppliersNumber;
+    }
+
+    public static int getNumberOfWorkers() {
+        return numberOfWorkers;
+    }
+
+    public static int getDealersNumber() {
+        return dealersNumber;
+    }
+
+    public static boolean isToLog() {
+        return toLog;
+    }
+
     static private int accessoryStorageCapacity;
     static private int bodiesStorageCapacity;
     static private int enginesStorageCapacity;
@@ -71,8 +103,8 @@ public class Initializer {
         Form form = new Form(new FormStartObjects((int newData) -> {
             for(Supplier supplier : accessorySuppliers) {
                 SwingUtilities.invokeLater(() -> supplier.setSleepTime(newData));
-            }},(int newData) -> SwingUtilities.invokeLater(() -> bodiesSupplier.setSleepTime(newData)),
-                (int newData) -> SwingUtilities.invokeLater(() -> engineSupplier.setSleepTime(newData)),
+            }}, (int newData) -> SwingUtilities.invokeLater(() -> engineSupplier.setSleepTime(newData)),
+                (int newData) -> SwingUtilities.invokeLater(() -> bodiesSupplier.setSleepTime(newData)),
                 dealersNumber, accessorySuppliersNumber,
                 accessoryStorageCapacity, bodiesStorageCapacity, enginesStorageCapacity,
                 (int newData) -> SwingUtilities.invokeLater(() -> logger.setToLog(!logger.isToLog())), toLog));
