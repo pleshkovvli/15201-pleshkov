@@ -1,0 +1,7 @@
+Directory     — testdirectory
+Configuration — testconfig
+Total — 23 lines in 7 files.
+————————————
+.l          — 7 lines in 1 files.
+<4567       — 3 lines in 2 files.
+&(.l <4567) — 2 lines in 1 files.
