@@ -5,6 +5,7 @@ import ru.nsu.ccfit.pleshkov.lab2.Form;
 import javax.swing.*;
 import java.io.*;
 import java.nio.file.Path;
+import java.util.ArrayList;
 
 public class Initializer {
     final static public int INIT_SLEEP_TIME = 100;
@@ -61,7 +62,7 @@ public class Initializer {
     static private int dealersNumber;
     static private boolean toLog;
 
-    static private Thread[] threads;
+    static private ArrayList<Thread> threads;
     static private Factory factory;
     static private FactoryLogger logger;
 
@@ -77,28 +78,28 @@ public class Initializer {
         Supplier<Body> bodiesSupplier = new Supplier<Body>(bodyStorage, Body.class,INIT_SLEEP_TIME);
 
         try {
-            logger = new FactoryLogger();
+            logger = FactoryLogger.getLogger();
             logger.setToLog(toLog);
         } catch (IOException e) {
             System.err.println(e.getMessage());
         }
 
-        threads = new Thread[dealersNumber + accessorySuppliersNumber + NUMBER_OF_THREADS];
+        threads = new ArrayList<Thread>(dealersNumber + accessorySuppliersNumber + NUMBER_OF_THREADS);
         factory = new Factory(accessoryStorage,bodyStorage,engineStorage,carStorage,numberOfWorkers,logger);
-        threads[0] = new Thread(bodiesSupplier, "bodiesSupplier");
-        threads[1] = new Thread(engineSupplier, "engineSupplier");
-        threads[2] = new Thread(new CarStorageController(carStorage,factory), "CarStorageController");
+        threads.add(new Thread(bodiesSupplier, "bodiesSupplier"));
+        threads.add(new Thread(engineSupplier, "engineSupplier"));
+        threads.add(new Thread(new CarStorageController(carStorage,factory), "CarStorageController"));
 
         Supplier[] accessorySuppliers = new Supplier[accessorySuppliersNumber];
         Dealer[] dealers = new Dealer[dealersNumber];
 
         for(int i = 0 ; i < dealers.length; i++) {
             dealers[i] = new Dealer(carStorage,logger,i);
-            threads[i + NUMBER_OF_THREADS] = new Thread(dealers[i], "Dealer#" + String.valueOf(i));
+            threads.add(new Thread(dealers[i], "Dealer#" + String.valueOf(i)));
         }
         for(int i = 0 ; i < accessorySuppliers.length; i++) {
             accessorySuppliers[i] = new Supplier<Accessory>(accessoryStorage, Accessory.class,INIT_SLEEP_TIME);
-            threads[i + dealersNumber + NUMBER_OF_THREADS] = new Thread(accessorySuppliers[i],"accessorySupplier#" + String.valueOf(i));
+            threads.add(new Thread(accessorySuppliers[i],"accessorySupplier#" + String.valueOf(i)));
         }
         Form form = new Form(new FormStartObjects((int newData) -> {
             for(Supplier supplier : accessorySuppliers) {
@@ -200,6 +201,13 @@ public class Initializer {
         for(Thread t : threads) {
             t.interrupt();
         }
-        logger.simpleLog("Finished");
+        for(Thread t : threads) {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                logger.error("Failed to join thread " + t.getName());
+            }
+        }
+        logger.log("Finished");
     }
 }

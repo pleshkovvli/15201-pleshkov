@@ -26,13 +26,13 @@ public class ThreadPool {
 
     private class PoolThreadRunnable implements Runnable {
         public void run() {
-            while(!Thread.interrupted()) {
-                try {
+            try {
+                while(!Thread.interrupted()) {
                     Runnable runnable = queue.dequeue();
                     runnable.run();
-                }  catch (InterruptedException e) {
-                    break;
                 }
+            } catch (InterruptedException e) {
+
             }
         }
     }

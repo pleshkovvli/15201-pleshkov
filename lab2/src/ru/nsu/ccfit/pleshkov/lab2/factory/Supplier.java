@@ -1,9 +1,12 @@
 package ru.nsu.ccfit.pleshkov.lab2.factory;
 
+import java.io.IOException;
+
 class Supplier<T extends IDTraceable> implements Runnable {
     private Storage<T> storage;
     final private Class typeClass;
 
+    private FactoryLogger logger;
     int getSleepTime() {
         return sleepTime;
     }
@@ -19,15 +22,14 @@ class Supplier<T extends IDTraceable> implements Runnable {
             while(!Thread.interrupted()) {
                 Thread.sleep(sleepTime);
                 T detail = null;
-                try {
                     detail = (T) typeClass.newInstance();
-                } catch (Exception e) {
-                    System.err.println("Failed to cast: " + typeClass);
-                }
                 storage.enqueue(detail);
             }
-        } catch (InterruptedException e) {
-
+        } catch (IllegalAccessException | InstantiationException e) {
+            logger.error("Failed to cast: " + typeClass);
+        }
+        catch (InterruptedException e) {
+            logger.log("Stopping " + Thread.currentThread().getName());
         }
     }
 
@@ -35,5 +37,10 @@ class Supplier<T extends IDTraceable> implements Runnable {
         this.typeClass = typeClass;
         this.storage = storage;
         this.sleepTime = sleepTime;
+        try {
+            logger = FactoryLogger.getLogger();
+        } catch (IOException e) {
+
+        }
     }
 }

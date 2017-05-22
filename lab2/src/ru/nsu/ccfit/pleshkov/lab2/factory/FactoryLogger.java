@@ -8,6 +8,15 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 class FactoryLogger implements Observer {
+    private static FactoryLogger instance;
+
+    public static synchronized FactoryLogger getLogger() throws IOException {
+        if(instance == null) {
+            instance = new FactoryLogger();
+        }
+        return instance;
+    }
+
     private static final String LOG_FILE_NAME = "factory.log";
     private static final String DELIMITER = ": ";
     private static final String SPACE = " ";
@@ -30,7 +39,7 @@ class FactoryLogger implements Observer {
 
     private static Logger logger;
 
-    FactoryLogger() throws IOException {
+    private FactoryLogger() throws IOException {
         PropertyConfigurator.configure("log4j.properties");
         if(!Files.exists(Paths.get(LOG_FILE_NAME))) {
             Files.createFile(Paths.get(LOG_FILE_NAME));
@@ -52,6 +61,28 @@ class FactoryLogger implements Observer {
                     + BODY + DELIMITER + car.getBodyID() + COMMA
                     + MOTOR + DELIMITER + car.getEngineID() + COMMA
                     + ACCESSORY + SPACE + car.getAccessoryID() + ")");
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+    }
+
+    void log(String message) {
+        if(!toLog) {
+            return;
+        }
+        try {
+            logger.info(message);
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+    }
+
+    void error(String message) {
+        if(!toLog) {
+            return;
+        }
+        try {
+            logger.error(message);
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }

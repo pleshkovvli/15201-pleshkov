@@ -12,7 +12,10 @@ public class Main {
         try {
             Initializer.startFactory(Paths.get(args[0]));
         } catch (BadParseException e) {
-            System.out.println(e.getMessage());
+            FactoryLogger logger = FactoryLogger.getLogger();
+            if(logger != null) {
+                logger.error(e.getMessage());
+            }
         }
     }
 
