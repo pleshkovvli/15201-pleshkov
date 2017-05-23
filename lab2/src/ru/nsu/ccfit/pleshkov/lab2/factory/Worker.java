@@ -1,5 +1,7 @@
 package ru.nsu.ccfit.pleshkov.lab2.factory;
 
+import java.io.IOException;
+
 class Worker implements Runnable {
     private Storage<Engine> engineStorage;
     private Storage<Body> bodyStorage;
@@ -13,18 +15,24 @@ class Worker implements Runnable {
             carStorage.enqueue(car);
         } catch (BadDetailException e) {
             if(logger != null) {
-                logger.simpleLog(Thread.currentThread().getName() + e.getMessage());
+                logger.log(Thread.currentThread().getName() + e.getMessage());
             }
         } catch (InterruptedException e) {
-
+            if(logger != null) {
+                logger.log(Thread.currentThread().getName() + " was interrupted");
+            }
         }
     }
 
-    Worker(Storage<Accessory> accessories, Storage<Body> bodies,Storage<Engine> engines, CarStorage carStorage, FactoryLogger logger) {
+    Worker(Storage<Accessory> accessories, Storage<Body> bodies,Storage<Engine> engines, CarStorage carStorage) {
         this.engineStorage = engines;
         this.bodyStorage = bodies;
         this.accessoryStorage = accessories;
         this.carStorage = carStorage;
-        this.logger = logger;
+        try {
+            this.logger = FactoryLogger.getLogger();
+        } catch (IOException e) {
+            System.err.println(Thread.currentThread().getName() + " failed to get logger");
+        }
     }
 }

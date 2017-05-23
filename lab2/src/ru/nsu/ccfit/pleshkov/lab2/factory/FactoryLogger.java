@@ -87,8 +87,4 @@ class FactoryLogger implements Observer {
             System.err.println(e.getMessage());
         }
     }
-
-    void simpleLog(String s) {
-        logger.info(s);
-    }
 }

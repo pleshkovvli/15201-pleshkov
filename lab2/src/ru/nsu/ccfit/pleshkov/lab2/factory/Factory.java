@@ -17,8 +17,8 @@ class Factory {
     }
 
     Factory(Storage<Accessory> accessories, Storage<Body> bodies, Storage<Engine> engines,
-            CarStorage carStorage, int numberOfThreads, FactoryLogger logger) {
-        worker = new Worker(accessories,bodies,engines,carStorage, logger);
+            CarStorage carStorage, int numberOfThreads) {
+        worker = new Worker(accessories,bodies,engines,carStorage);
         pool = new ThreadPool(numberOfThreads);
     }
 }

@@ -18,6 +18,8 @@ class CarStorageController implements Runnable {
                 }
             }
         } catch (InterruptedException e) {
+            logger.log(Thread.currentThread().getName() + " was interrupted");
+        } finally {
             if(logger != null) {
                 logger.log("Stopping car storage controller");
             }
@@ -30,7 +32,7 @@ class CarStorageController implements Runnable {
         try {
             logger = FactoryLogger.getLogger();
         } catch (IOException e) {
-
+            System.err.println(Thread.currentThread().getName() + " failed to get logger");
         }
     }
 }

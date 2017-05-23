@@ -1,5 +1,6 @@
 package ru.nsu.ccfit.pleshkov.lab2.factory;
 
+import java.io.IOException;
 import java.util.LinkedList;
 
 class Dealer implements Runnable, Observable {
@@ -16,8 +17,8 @@ class Dealer implements Runnable, Observable {
     private LinkedList<Observer> observers = new LinkedList<>();
 
     public void run() {
+        try {
         while(!Thread.interrupted()) {
-            try {
                 Car car = storage.dequeue();
                 if(car!=null) {
                     profit++;
@@ -26,9 +27,9 @@ class Dealer implements Runnable, Observable {
                 if(logger != null) {
                     logger.log(number, car);
                 }
-            } catch (InterruptedException e) {
-                break;
             }
+        } catch (InterruptedException e) {
+            logger.log(Thread.currentThread().getName() + " was interrupted");
         }
     }
 
@@ -41,6 +42,11 @@ class Dealer implements Runnable, Observable {
     Dealer(CarStorage storage, int number)  {
         this.storage = storage;
         this.number = number;
+        try {
+            this.logger = FactoryLogger.getLogger();
+        } catch (IOException e) {
+            System.err.println(Thread.currentThread().getName() + " failed to get logger");
+        }
     }
 
     private int getProfit() {

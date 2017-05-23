@@ -12,86 +12,70 @@ public class Initializer {
     final static public int MAX_SLEEP_TIME = 2000;
     final static private int NUMBER_OF_THREADS = 3;
 
-    final static private String accessoryStorageCapacityString = "accessoryStorageCapacity";
-    final static private String bodiesStorageCapacityString = "bodiesStorageCapacity";
-    final static private String enginesStorageCapacityString = "enginesStorageCapacity";
-    final static private String carStorageCapacityString = "carStorageCapacity";
-    final static private String accessorySuppliersNumberString = "accessorySuppliersNumber";
-    final static private String numberOfWorkersString = "numberOfWorkers";
-    final static private String dealersNumberString = "dealersNumber";
-    final static private String toLogString = "toLog";
+    private static ConfigData data;
 
     public static int getAccessoryStorageCapacity() {
-        return accessoryStorageCapacity;
+        return data.getAccessoryStorageCapacity();
     }
 
     public static int getBodiesStorageCapacity() {
-        return bodiesStorageCapacity;
+        return data.getBodiesStorageCapacity();
     }
 
     public static int getEnginesStorageCapacity() {
-        return enginesStorageCapacity;
+        return data.getEnginesStorageCapacity();
     }
 
     public static int getCarStorageCapacity() {
-        return carStorageCapacity;
+        return data.getCarStorageCapacity();
     }
 
     public static int getAccessorySuppliersNumber() {
-        return accessorySuppliersNumber;
+        return data.getAccessorySuppliersNumber();
     }
 
     public static int getNumberOfWorkers() {
-        return numberOfWorkers;
+        return data.getNumberOfWorkers();
     }
 
     public static int getDealersNumber() {
-        return dealersNumber;
+        return data.getDealersNumber();
     }
 
     public static boolean isToLog() {
-        return toLog;
+        return data.isToLog();
     }
-
-    static private int accessoryStorageCapacity;
-    static private int bodiesStorageCapacity;
-    static private int enginesStorageCapacity;
-    static private int carStorageCapacity;
-    static private int accessorySuppliersNumber;
-    static private int numberOfWorkers;
-    static private int dealersNumber;
-    static private boolean toLog;
 
     static private ArrayList<Thread> threads;
     static private Factory factory;
     static private FactoryLogger logger;
 
     public static void startFactory(Path configFilePath) throws BadParseException {
-        Initializer.parseConfig(configFilePath);
+        data = ConfigParser.parseConfig(configFilePath);
 
-        Storage<Accessory> accessoryStorage = new Storage<>(accessoryStorageCapacity);
-        Storage<Body> bodyStorage = new Storage<>(bodiesStorageCapacity);
-        Storage<Engine> engineStorage = new Storage<>(enginesStorageCapacity);
-        CarStorage carStorage = new CarStorage(carStorageCapacity);
+        Storage<Accessory> accessoryStorage = new Storage<>(getAccessoryStorageCapacity());
+        Storage<Body> bodyStorage = new Storage<>(getBodiesStorageCapacity());
+        Storage<Engine> engineStorage = new Storage<>(getEnginesStorageCapacity());
+        CarStorage carStorage = new CarStorage(getCarStorageCapacity());
 
         Supplier<Engine> engineSupplier = new Supplier<Engine>(engineStorage, Engine.class,INIT_SLEEP_TIME);
         Supplier<Body> bodiesSupplier = new Supplier<Body>(bodyStorage, Body.class,INIT_SLEEP_TIME);
 
         try {
             logger = FactoryLogger.getLogger();
-            logger.setToLog(toLog);
+            logger.setToLog(isToLog());
         } catch (IOException e) {
             System.err.println(e.getMessage());
         }
 
-        threads = new ArrayList<Thread>(dealersNumber + accessorySuppliersNumber + NUMBER_OF_THREADS);
-        factory = new Factory(accessoryStorage,bodyStorage,engineStorage,carStorage,numberOfWorkers,logger);
+        threads = new ArrayList<Thread>(getDealersNumber() + getAccessorySuppliersNumber() + NUMBER_OF_THREADS);
+        factory = new Factory(accessoryStorage,bodyStorage,engineStorage,carStorage,getNumberOfWorkers());
         threads.add(new Thread(bodiesSupplier, "bodiesSupplier"));
         threads.add(new Thread(engineSupplier, "engineSupplier"));
         threads.add(new Thread(new CarStorageController(carStorage,factory), "CarStorageController"));
 
-        Supplier[] accessorySuppliers = new Supplier[accessorySuppliersNumber];
-        Dealer[] dealers = new Dealer[dealersNumber];
+        Supplier[] accessorySuppliers = new Supplier[getAccessorySuppliersNumber()];
+        Dealer[] dealers = new Dealer[getDealersNumber()];
 
         for(int i = 0 ; i < dealers.length; i++) {
             dealers[i] = new Dealer(carStorage,logger,i);
@@ -106,9 +90,10 @@ public class Initializer {
                 SwingUtilities.invokeLater(() -> supplier.setSleepTime(newData));
             }}, (int newData) -> SwingUtilities.invokeLater(() -> engineSupplier.setSleepTime(newData)),
                 (int newData) -> SwingUtilities.invokeLater(() -> bodiesSupplier.setSleepTime(newData)),
-                dealersNumber, accessorySuppliersNumber,
-                accessoryStorageCapacity, bodiesStorageCapacity, enginesStorageCapacity,
-                (int newData) -> SwingUtilities.invokeLater(() -> logger.setToLog(!logger.isToLog())), toLog));
+                getDealersNumber(), getAccessorySuppliersNumber(),
+                getAccessoryStorageCapacity(), getBodiesStorageCapacity(), getEnginesStorageCapacity(),
+                (int newData) -> SwingUtilities.invokeLater(() -> {if(logger != null ) logger.setToLog(!logger.isToLog());}),
+                isToLog()));
 
         new CountObserver(bodyStorage) {
             @Override
@@ -145,56 +130,12 @@ public class Initializer {
         for(Thread t : threads) {
             t.start();
         }
-        logger.simpleLog("Started");
-    }
-
-    private static void parseConfig(Path configFilePath) throws BadParseException {
-        try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(configFilePath.toFile())))) {
-            String line = reader.readLine();
-            accessoryStorageCapacity = parseLine(line, accessoryStorageCapacityString);
-            line = reader.readLine();
-            bodiesStorageCapacity = parseLine(line, bodiesStorageCapacityString);
-            line = reader.readLine();
-            enginesStorageCapacity = parseLine(line, enginesStorageCapacityString);
-            line = reader.readLine();
-            carStorageCapacity = parseLine(line, carStorageCapacityString);
-            line = reader.readLine();
-            accessorySuppliersNumber = parseLine(line, accessorySuppliersNumberString);
-            line = reader.readLine();
-            numberOfWorkers = parseLine(line, numberOfWorkersString);
-            line = reader.readLine();
-            dealersNumber = parseLine(line, dealersNumberString);
-            line = reader.readLine();
-            if(line.substring(0,toLogString.length()).equals(toLogString)) {
-                if(line.substring(toLogString.length()+1).equals("true")) {
-                    toLog = true;
-                } else if(line.substring(toLogString.length()+1).equals("false")) {
-                    toLog = false;
-                }
-            } else {
-                throw new BadParseException("Bad parse at: " + line);
-            }
-        } catch (IOException e) {
-            throw new BadParseException("",e);
+        if(logger != null) {
+            logger.log("Started");
         }
     }
 
-    private static int parseLine(String line, String template) throws BadParseException {
-        if(line.substring(0,template.length()).equals(template)) {
-            int tmp;
-            try {
-                tmp = Integer.parseInt(line.substring(template.length() + 1));
-            } catch (NumberFormatException e) {
-                throw new BadParseException("Bad parse at: " + line);
-            }
-            if(tmp <= 0) {
-                throw new BadParseException("Bad parse at: " + line);
-            }
-            return tmp;
-        } else {
-            throw new BadParseException("Bad parse at: " + line);
-        }
-    }
+
 
     public static void finish() {
         factory.stop();
@@ -208,6 +149,8 @@ public class Initializer {
                 logger.error("Failed to join thread " + t.getName());
             }
         }
-        logger.log("Finished");
+        if(logger != null) {
+            logger.log("Finished");
+        }
     }
 }
