@@ -2,9 +2,32 @@ package ru.nsu.ccfit.pleshkov.lab2.factory;
 
 import ru.nsu.ccfit.pleshkov.lab2.pool.ThreadPool;
 
-class Factory {
+import java.util.ArrayList;
+
+class Factory implements Observable {
     final private Worker worker;
     private ThreadPool pool;
+
+    private ArrayList<Observer> observers = new ArrayList<>();
+
+    @Override
+    public void removeObserver(Observer observer) {
+        if(observers.contains(observer)) {
+            observers.remove(observer);
+            pool.removeObserver(observer);
+        }
+    }
+
+    @Override
+    public void addObserver(Observer observer) {
+        observers.add(observer);
+        pool.addObserver(observer);
+    }
+
+    @Override
+    public void notifyObservers() {
+
+    }
 
     void stop() {
         pool.stopPool();

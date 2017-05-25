@@ -78,7 +78,7 @@ public class Initializer {
         Dealer[] dealers = new Dealer[getDealersNumber()];
 
         for(int i = 0 ; i < dealers.length; i++) {
-            dealers[i] = new Dealer(carStorage,logger,i);
+            dealers[i] = new Dealer(carStorage,i,INIT_SLEEP_TIME);
             threads.add(new Thread(dealers[i], "Dealer#" + String.valueOf(i)));
         }
         for(int i = 0 ; i < accessorySuppliers.length; i++) {
@@ -90,8 +90,13 @@ public class Initializer {
                 SwingUtilities.invokeLater(() -> supplier.setSleepTime(newData));
             }}, (int newData) -> SwingUtilities.invokeLater(() -> engineSupplier.setSleepTime(newData)),
                 (int newData) -> SwingUtilities.invokeLater(() -> bodiesSupplier.setSleepTime(newData)),
+                (int newData) -> {
+                    for(Dealer dealer : dealers) {
+                        SwingUtilities.invokeLater(() -> dealer.setSleepTime(newData));
+                    }},
                 getDealersNumber(), getAccessorySuppliersNumber(),
                 getAccessoryStorageCapacity(), getBodiesStorageCapacity(), getEnginesStorageCapacity(),
+                getCarStorageCapacity(), getNumberOfWorkers(),
                 (int newData) -> SwingUtilities.invokeLater(() -> {if(logger != null ) logger.setToLog(!logger.isToLog());}),
                 isToLog()));
 
@@ -111,6 +116,18 @@ public class Initializer {
             @Override
             protected void specificJob() {
                 form.updateNumberOfAccessories(getCount());
+            }
+        };
+        new CountObserver(carStorage) {
+            @Override
+            protected void specificJob() {
+                form.updateNumberOfCars(getCount());
+            }
+        };
+        new CountObserver(factory) {
+            @Override
+            protected void specificJob() {
+                form.updateNumberOfWorkers(getCount());
             }
         };
         CountObserver[] profitObservers = new CountObserver[dealers.length];

@@ -8,6 +8,17 @@ class Dealer implements Runnable, Observable {
     private int profit = 0;
     private int number;
 
+    int getSleepTime() {
+        return sleepTime;
+    }
+
+    void setSleepTime(int sleepTime) {
+        this.sleepTime = sleepTime;
+    }
+
+    private int sleepTime;
+
+
     public void setLogger(FactoryLogger logger) {
         this.logger = logger;
     }
@@ -19,6 +30,7 @@ class Dealer implements Runnable, Observable {
     public void run() {
         try {
         while(!Thread.interrupted()) {
+                Thread.sleep(sleepTime);
                 Car car = storage.dequeue();
                 if(car!=null) {
                     profit++;
@@ -33,15 +45,10 @@ class Dealer implements Runnable, Observable {
         }
     }
 
-    Dealer(CarStorage storage, FactoryLogger logger, int number)  {
-        this.logger = logger;
+    Dealer(CarStorage storage, int number, int sleepTime)  {
         this.storage = storage;
         this.number = number;
-    }
-
-    Dealer(CarStorage storage, int number)  {
-        this.storage = storage;
-        this.number = number;
+        this.sleepTime = sleepTime;
         try {
             this.logger = FactoryLogger.getLogger();
         } catch (IOException e) {

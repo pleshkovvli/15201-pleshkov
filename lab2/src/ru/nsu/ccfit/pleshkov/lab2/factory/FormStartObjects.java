@@ -1,16 +1,22 @@
 package ru.nsu.ccfit.pleshkov.lab2.factory;
 
 public class FormStartObjects {
-    public FormStartObjects(Observer accessoriesSleepObserver, Observer enginesSleepObserver, Observer bodiesSleepObserver, int numberOfDealers, int numberOfAccessoriesSuppliers, int accessoriesStorageCapacity, int bodiesStorageCapacity, int enginesStorageCapacity, Observer loggingObserver, boolean toLog) {
+    public FormStartObjects(Observer accessoriesSleepObserver, Observer enginesSleepObserver,
+                            Observer bodiesSleepObserver, Observer dealersSleepObserver, int numberOfDealers, int numberOfAccessoriesSuppliers,
+                            int accessoriesStorageCapacity, int bodiesStorageCapacity, int enginesStorageCapacity,
+                            int carStorageCapacity, int numberOfWorkers, Observer loggingObserver, boolean toLog) {
         this.accessoriesSleepObserver = accessoriesSleepObserver;
         this.enginesSleepObserver = enginesSleepObserver;
         this.bodiesSleepObserver = bodiesSleepObserver;
+        this.dealersSleepObserver = dealersSleepObserver;
         this.numberOfDealers = numberOfDealers;
         this.numberOfAccessoriesSuppliers = numberOfAccessoriesSuppliers;
         this.accessoriesStorageCapacity = accessoriesStorageCapacity;
         this.bodiesStorageCapacity = bodiesStorageCapacity;
         this.enginesStorageCapacity = enginesStorageCapacity;
+        this.carStorageCapacity = carStorageCapacity;
         this.loggingObserver = loggingObserver;
+        this.numberOfWorkers = numberOfWorkers;
         this.toLog = toLog;
     }
 
@@ -62,6 +68,24 @@ public class FormStartObjects {
     final private int accessoriesStorageCapacity;
     final private int bodiesStorageCapacity;
     final private int enginesStorageCapacity;
+
+    public int getNumberOfWorkers() {
+        return numberOfWorkers;
+    }
+
+    final private int numberOfWorkers;
+
+    public int getCarStorageCapacity() {
+        return carStorageCapacity;
+    }
+
+    final private int carStorageCapacity;
     final private Observer loggingObserver;
+
+    public Observer getDealersSleepObserver() {
+        return dealersSleepObserver;
+    }
+
+    final private Observer dealersSleepObserver;
     final private boolean toLog;
 }
