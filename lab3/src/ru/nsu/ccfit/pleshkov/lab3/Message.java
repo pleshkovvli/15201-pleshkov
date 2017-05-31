@@ -9,12 +9,6 @@ class Message implements Serializable {
         this.sessionID = sessionID;
     }
 
-    Message(String message, MessageType type, String sender) {
-        this.message = message;
-        this.type = type;
-        this.sender = sender;
-    }
-
     Message(String message, MessageType type) {
         this.message = message;
         this.type = type;
@@ -34,24 +28,20 @@ class Message implements Serializable {
         return sender;
     }
 
-    public void setSender(String sender) {
+    void setSender(String sender) {
         this.sender = sender;
     }
 
     private String sender;
 
-    public MessageType getType() {
+    MessageType getType() {
         return type;
     }
 
     final private MessageType type;
 
-    public int getSessionID() {
+    int getSessionID() {
         return sessionID;
-    }
-
-    public void setSessionID(int sessionID) {
-        this.sessionID = sessionID;
     }
 
     private int sessionID;

@@ -56,7 +56,6 @@ class ClientObjectMessagesHandler extends MessagesHandler {
     protected void initWriting() throws IOException, InterruptedException {
         Message message = queue.take();
         Client.setLogin(message.getMessage());
-        Client.getGui().getButton().setLogin(false);
         setSessionID(message.getSessionID());
         Client.getGui().startMessages();
         writeMessage(new Message(Client.getLogin(),MessageType.LOGIN));
@@ -66,8 +65,11 @@ class ClientObjectMessagesHandler extends MessagesHandler {
     protected void initReading() throws IOException, InterruptedException, FailedReadException {
         try {
             Message message =  (Message) messagesReader.readObject();
-            if(message.getType() != MessageType.SUCCESS) {
-                throw new FailedReadException();
+            while(message.getType() != MessageType.SUCCESS) {
+                if(message.getType() == MessageType.ERROR) {
+                    Client.getGui().errorText("ERROR: " + message.getMessage());
+                }
+                message =  (Message) messagesReader.readObject();
             }
             sessionID = Integer.valueOf(message.getMessage());
         } catch (ClassNotFoundException e)  {
@@ -79,7 +81,6 @@ class ClientObjectMessagesHandler extends MessagesHandler {
     protected void endReading() {
         try {
             messagesReader.close();
-            Client.getGui().getButton().setLogin(true);
             if(!getSocket().isClosed()) {
                 getSocket().close();
             }
@@ -101,7 +102,6 @@ class ClientObjectMessagesHandler extends MessagesHandler {
     protected void writeMessage(Message message) throws IOException {
         messagesWriter.writeObject(message);
         if(message.getType() == MessageType.LOGOUT) {
-            Client.getGui().getButton().setLogin(true);
             endIt();
         }
     }
@@ -114,16 +114,25 @@ class ClientObjectMessagesHandler extends MessagesHandler {
 
     @Override
     protected void handleMessage(Message message) throws IOException {
+        String mes = message.getMessage();
         if(message.getType() == MessageType.LIST) {
-            Client.getGui().updateText("LIST: " + message.getMessage());
+            Client.getGui().updateText("LIST: " + mes);
         }
         if(message.getType() == MessageType.MESSAGE) {
-            Client.getGui().updateText(message.getSender() + ": " + message.getMessage());
+            Client.getGui().updateText(message.getSender() + ": " + mes);
         }
-        if(message.getType() == MessageType.SUCCESS) {
-            if(!message.getMessage().isEmpty()) {
-                Client.getGui().getButton().setLogin(false);
-            }
+        //if(message.getType() == MessageType.SUCCESS) {
+        //
+        //}
+        if(message.getType() == MessageType.LOGIN) {
+            Client.getGui().updateText(mes + " joined the chat");
+        }
+        if(message.getType() == MessageType.LOGOUT) {
+            Client.getGui().updateText(mes + " left the chat");
+        }
+        if(message.getType() == MessageType.RELOGIN) {
+            Client.getGui().updateText(mes.substring(0,mes.indexOf('>')) + " relogged in as "
+                    + mes.substring(mes.indexOf('>') + 1));
         }
     }
 }

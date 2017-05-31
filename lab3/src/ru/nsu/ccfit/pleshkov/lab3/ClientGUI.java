@@ -5,48 +5,50 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 
 public class ClientGUI extends JFrame {
-    private JTextArea history;
+    private JTextArea messagesHistory;
     private JTextField message;
     private JPanel Panel;
-    private JLabel MessageText;
+    private JLabel messageText;
     private JButton logoutButton;
     private JButton listButton;
     private JTextField loginText;
-    private LogoutButton button;
-    private LogoutButton list;
+    private JButton loginButton;
+    private ClickButton logoutClick;
+    private ClickButton listClick;
+    private ClickButton loginClick;
     private MessageForm messageForm;
     private Messages messages;
-
-    public JTextArea getHistory() {
-        return history;
-    }
-
-    public LogoutButton getButton() {
-        return button;
-    }
 
     ClientGUI() {
         setContentPane(Panel);
         setBounds(400, 200, 600, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         listButton.setText("List");
+        logoutButton.setText("Logout");
+        loginButton.setText("Login");
+        messageText.setText("Login");
         messageForm = new MessageForm(message);
-        messages = new Messages(history);
-        button = new LogoutButton(logoutButton) {
+        messages = new Messages(messagesHistory);
+        logoutClick = new ClickButton(logoutButton) {
             @Override
             public void notifyObservers() {
                 for(Observer observer : observers) {
-                    if(isLogin) {
-                        if ((loginText.getText() != null) && (!loginText.getText().isEmpty())) {
-                            observer.update(loginText.getText(), MessageType.LOGIN);
-                        }
-                    } else {
-                        observer.update("",MessageType.LOGOUT);
+                    observer.update("",MessageType.LOGOUT);
+                }
+            }
+        };
+        loginClick = new ClickButton(loginButton) {
+            @Override
+            public void notifyObservers() {
+                String text = loginText.getText();
+                if ((text != null) && (!text.isEmpty())) {
+                    for(Observer observer : observers) {
+                        observer.update(text, MessageType.LOGIN);
                     }
                 }
             }
         };
-        list = new LogoutButton(listButton) {
+        listClick = new ClickButton(listButton) {
             @Override
             public void notifyObservers() {
                 for(Observer observer : observers) {
@@ -57,16 +59,15 @@ public class ClientGUI extends JFrame {
         setVisible(true);
     }
 
-    void init(Observer messagesObserver, Observer initObserver) {
+    void init(Observer messagesObserver) {
         messageForm.addObserver(messagesObserver);
-
-        button.addObserver(messagesObserver);
-        list.addObserver(messagesObserver);
+        logoutClick.addObserver(messagesObserver);
+        loginClick.addObserver(messagesObserver);
+        listClick.addObserver(messagesObserver);
     }
 
     void startMessages() {
-        MessageText.setText(messageForm.currentMessage);
-        logoutButton.setText("Logout");
+        messageText.setText(messageForm.currentMessage);
         messageForm.form.addActionListener((ActionEvent e) -> {
             messageForm.currentMessage = messageForm.form.getText();
             updateText("∽ - " + messageForm.currentMessage);
@@ -75,30 +76,12 @@ public class ClientGUI extends JFrame {
         });
     }
 
-    abstract class LogoutButton implements Observable {
+    abstract class ClickButton implements Observable {
         ArrayList<Observer> observers = new ArrayList<>();
 
-        public boolean isLogin() {
-            return isLogin;
-        }
-
-        public void setLogin(boolean login) {
-            if(login) {
-                button.setText("Login");
-            } else {
-                button.setText("Logout");
-            }
-            isLogin = login;
-        }
-
-        protected boolean isLogin = true;
-
-        LogoutButton(JButton button) {
+        ClickButton(JButton button) {
             this.button = button;
-            button.setText("");
-            button.addActionListener((ActionEvent e) -> {
-                notifyObservers();
-            });
+            button.addActionListener((ActionEvent e) -> notifyObservers());
         }
 
         private JButton button;
@@ -114,7 +97,6 @@ public class ClientGUI extends JFrame {
         public void addObserver(Observer observer) {
             observers.add(observer);
         }
-
     }
 
     private class Messages {
@@ -126,16 +108,22 @@ public class ClientGUI extends JFrame {
         void updateText(String mes) {
             messages.setText(messages.getText() + "\n" + mes);
         }
+
+        void errorText(String mes) {
+            messages.setText(messages.getText() + "\n" + mes);
+        }
     }
 
     void updateText(String mes) {
         messages.updateText(mes);
     }
+    void errorText(String mes) {
+        messages.errorText(mes);
+    }
 
     private class MessageForm implements Observable {
         MessageForm(JTextField form) {
             this.form = form;
-            MessageText.setText("Login");
         }
 
         private ArrayList<Observer> observers = new ArrayList<>();

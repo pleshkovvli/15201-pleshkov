@@ -29,10 +29,6 @@ abstract class MessagesHandler {
 
     private Thread reader;
 
-    public boolean isInit() {
-        return init;
-    }
-
     void setInit(boolean init) {
         this.init = init;
     }

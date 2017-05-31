@@ -38,7 +38,7 @@ public class Client {
                     handler.setSessionID(sessionID);
                 }
                 gui.init((String message, MessageType type) -> SwingUtilities.invokeLater(() ->
-                        handler.getQueue().add(new Message(message,type,handler.getSessionID()))),null);
+                        handler.getQueue().add(new Message(message,type,handler.getSessionID()))));
                 handler.begin("Writer", "Reader");
                 if(init) {
                     sessionID = handler.getSessionID();
