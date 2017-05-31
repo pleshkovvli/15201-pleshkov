@@ -5,61 +5,71 @@ import java.net.Socket;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-public class ClientObjectMessagesHandler extends MessagesHandler {
-    public BlockingQueue<Message> getQueue() {
+class ClientObjectMessagesHandler extends MessagesHandler {
+    BlockingQueue<Message> getQueue() {
         return queue;
     }
 
-    public ClientObjectMessagesHandler(Socket socket) throws IOException {
+    ClientObjectMessagesHandler(Socket socket) throws IOException {
         super(socket);
         messagesReader = new ObjectInputStream(socket.getInputStream());
         messagesWriter = new ObjectOutputStream(socket.getOutputStream());
     }
 
-    BlockingQueue<Message> queue = new ArrayBlockingQueue<Message>(100);
-
-    public Client getClient() {
-        return client;
+    int getSessionID() {
+        return sessionID;
     }
 
-    public void setClient(Client client) {
-        this.client = client;
+    void setSessionID(int sessionID) {
+        this.sessionID = sessionID;
     }
 
-    private Client client;
+    private int sessionID;
 
-    BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(System.out));
-    ObjectInputStream messagesReader;
-    ObjectOutputStream messagesWriter;
+    private BlockingQueue<Message> queue = new ArrayBlockingQueue<>(100);
+
+    private ObjectInputStream messagesReader;
+    private ObjectOutputStream messagesWriter;
     @Override
     protected void endWriting() {
         try {
-            writer.close();
-            messagesReader.close();
+            messagesWriter.close();
+            if(!getSocket().isClosed()) {
+                getSocket().close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    protected void initWriting() throws IOException, FailedWriteException {
+    protected void fin() {
         try {
-            client.setLogin(queue.take().getMessage());
-            client.getGui().startMessages();
+            getReader().join();
+            getWriter().join();
         } catch (InterruptedException e) {
-            return;
+            e.printStackTrace();
         }
-        writeMessage(new Message(client.getLogin(),MessageType.LOGIN,client.getLogin()));
     }
 
     @Override
-    protected void initReading() throws IOException, FailedReadException {
+    protected void initWriting() throws IOException, InterruptedException {
+        Message message = queue.take();
+        Client.setLogin(message.getMessage());
+        Client.getGui().getButton().setLogin(false);
+        setSessionID(message.getSessionID());
+        Client.getGui().startMessages();
+        writeMessage(new Message(Client.getLogin(),MessageType.LOGIN));
+    }
+
+    @Override
+    protected void initReading() throws IOException, InterruptedException, FailedReadException {
         try {
             Message message =  (Message) messagesReader.readObject();
             if(message.getType() != MessageType.SUCCESS) {
                 throw new FailedReadException();
             }
+            sessionID = Integer.valueOf(message.getMessage());
         } catch (ClassNotFoundException e)  {
             throw new FailedReadException(e);
         }
@@ -68,8 +78,11 @@ public class ClientObjectMessagesHandler extends MessagesHandler {
     @Override
     protected void endReading() {
         try {
-            reader.close();
-            messagesWriter.close();
+            messagesReader.close();
+            Client.getGui().getButton().setLogin(true);
+            if(!getSocket().isClosed()) {
+                getSocket().close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -87,21 +100,30 @@ public class ClientObjectMessagesHandler extends MessagesHandler {
     @Override
     protected void writeMessage(Message message) throws IOException {
         messagesWriter.writeObject(message);
-    }
-
-    @Override
-    protected Message getMessage() throws IOException {
-        try {
-            return queue.take();
-        } catch (InterruptedException e) {
-            return null;
+        if(message.getType() == MessageType.LOGOUT) {
+            Client.getGui().getButton().setLogin(true);
+            endIt();
         }
     }
 
     @Override
-    protected void handleMessage(Message message) throws IOException {
-        client.getGui().updateText(message.getSender() +": " +message.getMessage() + "\n");
-        //writer.write(message.getSender() +": " +message.getMessage() + "\n");
-        //writer.flush();
+    protected Message getMessage() throws IOException, InterruptedException {
+        return queue.take();
+
     }
-};
+
+    @Override
+    protected void handleMessage(Message message) throws IOException {
+        if(message.getType() == MessageType.LIST) {
+            Client.getGui().updateText("LIST: " + message.getMessage());
+        }
+        if(message.getType() == MessageType.MESSAGE) {
+            Client.getGui().updateText(message.getSender() + ": " + message.getMessage());
+        }
+        if(message.getType() == MessageType.SUCCESS) {
+            if(!message.getMessage().isEmpty()) {
+                Client.getGui().getButton().setLogin(false);
+            }
+        }
+    }
+}

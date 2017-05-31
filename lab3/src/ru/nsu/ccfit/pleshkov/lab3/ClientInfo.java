@@ -1,27 +1,45 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
-public class ClientInfo {
+class ClientInfo {
     private String name;
     private ServerObjectMessagesHandler handler;
+    private int sessionID;
+    private boolean isOnline;
 
-    public String getName() {
+    int getSessionID() {
+        return sessionID;
+    }
+
+    void setSessionID(int sessionID) {
+        this.sessionID = sessionID;
+    }
+
+    boolean isOnline() {
+        return isOnline;
+    }
+
+    void setOnline(boolean online) {
+        isOnline = online;
+    }
+
+    String getName() {
         return name;
     }
 
-    public void setName(String name) {
+    void setName(String name) {
         this.name = name;
     }
 
-    public ServerObjectMessagesHandler getHandler() {
+    ServerObjectMessagesHandler getHandler() {
         return handler;
     }
 
-    public void setHandler(ServerObjectMessagesHandler handler) {
+    void setHandler(ServerObjectMessagesHandler handler) {
         this.handler = handler;
         handler.begin("W","R");
     }
 
-    public ClientInfo(String name, ServerObjectMessagesHandler handler) {
+    ClientInfo(String name, ServerObjectMessagesHandler handler) {
         this.name = name;
         this.handler = handler;
     }

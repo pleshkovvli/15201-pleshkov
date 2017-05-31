@@ -2,24 +2,35 @@ package ru.nsu.ccfit.pleshkov.lab3;
 
 import java.io.Serializable;
 
-public class Message implements Serializable {
-    public Message(String message, MessageType type, String sender) {
+class Message implements Serializable {
+    Message(String message, MessageType type, int sessionID) {
+        this.message = message;
+        this.type = type;
+        this.sessionID = sessionID;
+    }
+
+    Message(String message, MessageType type, String sender) {
         this.message = message;
         this.type = type;
         this.sender = sender;
     }
 
-    public String getMessage() {
+    Message(String message, MessageType type) {
+        this.message = message;
+        this.type = type;
+    }
+
+    String getMessage() {
         return message;
     }
 
-    public void setMessage(String message) {
+    void setMessage(String message) {
         this.message = message;
     }
 
     private String message;
 
-    public String getSender() {
+    String getSender() {
         return sender;
     }
 
@@ -34,4 +45,14 @@ public class Message implements Serializable {
     }
 
     final private MessageType type;
+
+    public int getSessionID() {
+        return sessionID;
+    }
+
+    public void setSessionID(int sessionID) {
+        this.sessionID = sessionID;
+    }
+
+    private int sessionID;
 }

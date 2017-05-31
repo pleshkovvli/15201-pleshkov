@@ -6,35 +6,48 @@ import java.net.InetAddress;
 import java.net.Socket;
 
 public class Client {
-    private static Object lock = new Object();
 
-    public static String getLogin() {
+    static String getLogin() {
         return login;
     }
 
-    public static void setLogin(String login) {
+    static void setLogin(String login) {
         Client.login = login;
     }
 
     private static String login = "login";
 
-    public static ClientGUI getGui() {
+    static ClientGUI getGui() {
         return gui;
     }
 
-    static ClientGUI gui;
+    private static ClientGUI gui;
+
+    static private int sessionID;
+
+    static private boolean init = true;
 
     public static void main(String[] args) throws InterruptedException {
-        try(Socket socket = new Socket(InetAddress.getLocalHost(),Server.PORT)) {
-            while(!Thread.interrupted()) {
+        try {
+            gui = new ClientGUI();
+            while(true) {
+                Socket socket = new Socket(InetAddress.getLocalHost(),Server.PORT);
                 ClientObjectMessagesHandler handler = new ClientObjectMessagesHandler(socket);
-                gui = new ClientGUI((String message) -> SwingUtilities.invokeLater(() ->
-                        handler.getQueue().add(new Message(message,MessageType.MESSAGE,login))));
-                handler.begin("Writer","Reader");
-                Thread.sleep(100000000);
+                handler.setInit(init);
+                if(!init) {
+                    handler.setSessionID(sessionID);
+                }
+                gui.init((String message, MessageType type) -> SwingUtilities.invokeLater(() ->
+                        handler.getQueue().add(new Message(message,type,handler.getSessionID()))),null);
+                handler.begin("Writer", "Reader");
+                if(init) {
+                    sessionID = handler.getSessionID();
+                }
+                init = false;
             }
         } catch (IOException e) {
             e.printStackTrace();
+            System.exit(0);
         }
     }
 }
