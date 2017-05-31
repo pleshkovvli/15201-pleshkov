@@ -13,7 +13,7 @@ public class Server {
             int i = 0;
             while(!Thread.interrupted()) {
                 Socket socket = serverSocket.accept();
-                ServerObjectMessagesHandler handler = new ServerObjectMessagesHandler(socket);
+                ServerMessagesHandler handler = new ServerXMLMessagesHandler(socket);
                 handler.begin("ServerWriter#" + String.valueOf(i),"ServerReader#" + String.valueOf(i));
                 ++i;
             }

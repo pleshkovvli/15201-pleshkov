@@ -32,7 +32,7 @@ public class Client {
             gui = new ClientGUI();
             while(true) {
                 Socket socket = new Socket(InetAddress.getLocalHost(),Server.PORT);
-                ClientObjectMessagesHandler handler = new ClientObjectMessagesHandler(socket);
+                ClientMessagesHandler handler = new ClientXMLMessagesHandler(socket);
                 handler.setInit(init);
                 if(!init) {
                     handler.setSessionID(sessionID);

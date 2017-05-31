@@ -2,7 +2,7 @@ package ru.nsu.ccfit.pleshkov.lab3;
 
 class ClientInfo {
     private String name;
-    private ServerObjectMessagesHandler handler;
+    private ServerMessagesHandler handler;
 
     public int getSessionID() {
         return sessionID;
@@ -27,11 +27,11 @@ class ClientInfo {
         return name;
     }
 
-    ServerObjectMessagesHandler getHandler() {
+    ServerMessagesHandler getHandler() {
         return handler;
     }
 
-    ClientInfo(String name, ServerObjectMessagesHandler handler) {
+    ClientInfo(String name, ServerMessagesHandler handler) {
         this.name = name;
         this.handler = handler;
     }
