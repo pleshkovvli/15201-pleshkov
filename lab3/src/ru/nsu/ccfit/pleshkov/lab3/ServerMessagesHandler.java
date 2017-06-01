@@ -103,7 +103,7 @@ abstract class ServerMessagesHandler extends MessagesHandler {
             queue.add(new Message(String.valueOf(id),MessageType.SUCCESS));
             for(ClientInfo client : clients.values()) {
                 if((client.getHandler() != this) && client.isOnline()) {
-                    client.getHandler().queue.add(new Message(message.getMessage(), MessageType.USERLOGIN));
+                    client.getHandler().queue.add(new Message(message.getMessage(), MessageType.USERLOGIN,message.getSender()));
                 }
             }
             return;

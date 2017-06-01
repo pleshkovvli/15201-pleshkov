@@ -87,7 +87,7 @@ public class ClientXMLMessagesHandler extends ClientMessagesHandler {
             while (read < length) {
                 read += messagesReader.read(bytes,read,length - read);
             }
-            System.out.println(new String(bytes));
+            //System.out.println(new String(bytes));
             Document document = builder.parse(new ByteArrayInputStream(bytes));
             String type = document.getDocumentElement().getTagName();
             if(type.equals("error")) {
@@ -113,8 +113,8 @@ public class ClientXMLMessagesHandler extends ClientMessagesHandler {
                 }
                 StringBuilder stringBuilder = new StringBuilder();
                 for(int i = 0; i < list.getLength(); i++) {
-                    stringBuilder.append(list.item(i).getTextContent());
                     stringBuilder.append("\n");
+                    stringBuilder.append(list.item(i).getChildNodes().item(0).getTextContent());
                 }
                 return new Message(stringBuilder.toString(),MessageType.LIST);
             }
@@ -192,7 +192,7 @@ public class ClientXMLMessagesHandler extends ClientMessagesHandler {
         }  catch (TransformerException e) {
             e.printStackTrace();
         }
-        System.out.println(sw.toString());
+        //System.out.println(sw.toString());
         messagesWriter.writeInt(sw.toString().length());
         messagesWriter.writeBytes(sw.toString());
     }

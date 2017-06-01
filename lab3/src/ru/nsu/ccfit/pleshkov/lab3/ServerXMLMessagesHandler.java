@@ -36,7 +36,7 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler {
             while (read < length) {
                 read += messagesReader.read(bytes,read,length - read);
             }
-            System.out.println(new String(bytes));
+            //System.out.println(new String(bytes));
             Document document = builder.parse(new ByteArrayInputStream(bytes));
             String type = document.getDocumentElement().getAttribute("name");
             if(type.equals("message")) {
@@ -98,7 +98,7 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler {
             event.setAttributeNode(eventName);
             doc.appendChild(event);
             Element sender = doc.createElement("name");
-            sender.setTextContent(message.getSender());
+            sender.setTextContent(message.getMessage());
             event.appendChild(sender);
         }
         if(message.getType() == MessageType.USERLOGOUT) {
@@ -108,7 +108,7 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler {
             event.setAttributeNode(eventName);
             doc.appendChild(event);
             Element sender = doc.createElement("name");
-            sender.setTextContent(message.getSender());
+            sender.setTextContent(message.getMessage());
             event.appendChild(sender);
         }
         if(message.getType() == MessageType.SUCCESS) {
@@ -134,7 +134,7 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler {
                 Element name = doc.createElement("name");
                 Element type = doc.createElement("type");
                 name.setTextContent(userName);
-                name.setTextContent(String.valueOf(i));
+                type.setTextContent(String.valueOf(i));
                 user.appendChild(name);
                 user.appendChild(type);
                 listusers.appendChild(user);
@@ -155,7 +155,7 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler {
         }  catch (TransformerException e) {
                 e.printStackTrace();
         }
-        System.out.println(sw.toString());
+        //System.out.println(sw.toString());
         messagesWriter.writeInt(sw.toString().length());
         messagesWriter.writeBytes(sw.toString());
     }
