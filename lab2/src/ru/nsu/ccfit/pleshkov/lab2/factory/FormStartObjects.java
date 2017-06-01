@@ -4,7 +4,7 @@ public class FormStartObjects {
     public FormStartObjects(Observer accessoriesSleepObserver, Observer enginesSleepObserver,
                             Observer bodiesSleepObserver, Observer dealersSleepObserver, int numberOfDealers, int numberOfAccessoriesSuppliers,
                             int accessoriesStorageCapacity, int bodiesStorageCapacity, int enginesStorageCapacity,
-                            int carStorageCapacity, int numberOfWorkers, Observer loggingObserver, boolean toLog) {
+                            int carStorageCapacity, int numberOfWorkers, int numberOfTasks, Observer loggingObserver, boolean toLog) {
         this.accessoriesSleepObserver = accessoriesSleepObserver;
         this.enginesSleepObserver = enginesSleepObserver;
         this.bodiesSleepObserver = bodiesSleepObserver;
@@ -17,6 +17,7 @@ public class FormStartObjects {
         this.carStorageCapacity = carStorageCapacity;
         this.loggingObserver = loggingObserver;
         this.numberOfWorkers = numberOfWorkers;
+        this.numberOfTasks = numberOfTasks;
         this.toLog = toLog;
     }
 
@@ -74,6 +75,12 @@ public class FormStartObjects {
     }
 
     final private int numberOfWorkers;
+
+    public int getNumberOfTasks() {
+        return numberOfTasks;
+    }
+
+    final private int numberOfTasks;
 
     public int getCarStorageCapacity() {
         return carStorageCapacity;

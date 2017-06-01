@@ -14,35 +14,35 @@ public class Initializer {
 
     private static ConfigData data;
 
-    public static int getAccessoryStorageCapacity() {
+    static int getAccessoryStorageCapacity() {
         return data.getAccessoryStorageCapacity();
     }
 
-    public static int getBodiesStorageCapacity() {
+    static int getBodiesStorageCapacity() {
         return data.getBodiesStorageCapacity();
     }
 
-    public static int getEnginesStorageCapacity() {
+    static int getEnginesStorageCapacity() {
         return data.getEnginesStorageCapacity();
     }
 
-    public static int getCarStorageCapacity() {
+    static int getCarStorageCapacity() {
         return data.getCarStorageCapacity();
     }
 
-    public static int getAccessorySuppliersNumber() {
+    static int getAccessorySuppliersNumber() {
         return data.getAccessorySuppliersNumber();
     }
 
-    public static int getNumberOfWorkers() {
+    static int getNumberOfWorkers() {
         return data.getNumberOfWorkers();
     }
 
-    public static int getDealersNumber() {
+    static int getDealersNumber() {
         return data.getDealersNumber();
     }
 
-    public static boolean isToLog() {
+    static boolean isToLog() {
         return data.isToLog();
     }
 
@@ -69,7 +69,7 @@ public class Initializer {
         }
 
         threads = new ArrayList<Thread>(getDealersNumber() + getAccessorySuppliersNumber() + NUMBER_OF_THREADS);
-        factory = new Factory(accessoryStorage,bodyStorage,engineStorage,carStorage,getNumberOfWorkers());
+        factory = new Factory(accessoryStorage,bodyStorage,engineStorage,carStorage,getNumberOfWorkers(),getCarStorageCapacity());
         threads.add(new Thread(bodiesSupplier, "bodiesSupplier"));
         threads.add(new Thread(engineSupplier, "engineSupplier"));
         threads.add(new Thread(new CarStorageController(carStorage,factory), "CarStorageController"));
@@ -96,7 +96,7 @@ public class Initializer {
                     }},
                 getDealersNumber(), getAccessorySuppliersNumber(),
                 getAccessoryStorageCapacity(), getBodiesStorageCapacity(), getEnginesStorageCapacity(),
-                getCarStorageCapacity(), getNumberOfWorkers(),
+                getCarStorageCapacity(), getNumberOfWorkers(), getCarStorageCapacity(),
                 (int newData) -> SwingUtilities.invokeLater(() -> {if(logger != null ) logger.setToLog(!logger.isToLog());}),
                 isToLog()));
 
@@ -124,10 +124,16 @@ public class Initializer {
                 form.updateNumberOfCars(getCount());
             }
         };
-        new CountObserver(factory) {
+        new CountObserver(factory.getPool()) {
             @Override
             protected void specificJob() {
                 form.updateNumberOfWorkers(getCount());
+            }
+        };
+        new CountObserver(factory.getQueue()) {
+            @Override
+            protected void specificJob() {
+                form.updateNumberOfTasks(getCount());
             }
         };
         CountObserver[] profitObservers = new CountObserver[dealers.length];
