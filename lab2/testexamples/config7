@@ -1,0 +1,8 @@
+accessoryStorageCapacity=123
+bodiesStorageCapacity=456
+enginesStorageCapacity=234
+carStorageCapacity=345
+accessorySuppliersNumber=21
+numberOfWorkers=15
+dealersNumber=8
+toLog=false
