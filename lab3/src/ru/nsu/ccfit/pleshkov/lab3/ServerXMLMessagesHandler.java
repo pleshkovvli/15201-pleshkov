@@ -13,6 +13,9 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.*;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
 
 class ServerXMLMessagesHandler extends ServerMessagesHandler {
     private DataInputStream messagesReader;
@@ -27,7 +30,7 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler {
     }
 
     @Override
-    protected Message readMessage() throws IOException, FailedReadException {
+    protected ClientMessage readMessage() throws IOException, FailedReadException {
         try {
             DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
             int length = messagesReader.readInt();
@@ -40,18 +43,19 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler {
             Document document = builder.parse(new ByteArrayInputStream(bytes));
             String type = document.getDocumentElement().getAttribute("name");
             if(type.equals("message")) {
-                return new Message(document.getElementsByTagName("message").item(0).getTextContent(),
-                        MessageType.MESSAGE,Integer.valueOf(document.getElementsByTagName("session").item(0).getTextContent()));
+                return new ClientChatMessage(document.getElementsByTagName("message").item(0).getTextContent(),
+                        Integer.valueOf(document.getElementsByTagName("session").item(0).getTextContent()));
             }
             if(type.equals("list")) {
-                return new Message("",MessageType.LIST,Integer.valueOf(document.getElementsByTagName("session").item(0).getTextContent()));
+                return new ClientListMessage(Integer.valueOf(document.getElementsByTagName("session").item(0).getTextContent()));
             }
             if(type.equals("login")) {
-                return new Message(document.getElementsByTagName("name").item(0).getTextContent(),MessageType.LOGIN, 0);
+                return new ClientLoginMessage(document.getElementsByTagName("name").item(0).getTextContent(),
+                        document.getElementsByTagName("type").item(0).getTextContent());
             }
             if(type.equals("logout")) {
-                return new Message("",MessageType.LOGOUT,
-                        Integer.valueOf(document.getElementsByTagName("session").item(0).getTextContent()));
+                return new ClientLogoutMessage(Integer.valueOf(document.getElementsByTagName("session").
+                        item(0).getTextContent()));
             }
         } catch (ParserConfigurationException e) {
             throw new FailedReadException(e);
@@ -61,8 +65,86 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler {
         return null;
     }
 
+    private Document doc;
+
+    protected void process(ServerErrorMessage message) {
+        Element error = doc.createElement("error");
+        doc.appendChild(error);
+        Element reason = doc.createElement("reason");
+        reason.setTextContent(message.getReason());
+        error.appendChild(reason);
+    }
+
+    protected void process(ServerChatMessage message) {
+        Element event = doc.createElement("event");
+        Attr eventName = doc.createAttribute("name");
+        eventName.setValue("message");
+        event.setAttributeNode(eventName);
+        doc.appendChild(event);
+        Element messageText = doc.createElement("message");
+        messageText.setTextContent(message.getMessage());
+        Element sender = doc.createElement("name");
+        sender.setTextContent(message.getName());
+        event.appendChild(messageText);
+        event.appendChild(sender);
+    }
+
+    protected void process(ServerUserloginMessage message) {
+        Element event = doc.createElement("event");
+        Attr eventName = doc.createAttribute("name");
+        eventName.setValue("userlogin");
+        event.setAttributeNode(eventName);
+        doc.appendChild(event);
+        Element sender = doc.createElement("name");
+        sender.setTextContent(message.getName());
+        event.appendChild(sender);
+    }
+
+    protected void process(ServerUserlogoutMessage message) {
+        Element event = doc.createElement("event");
+        Attr eventName = doc.createAttribute("name");
+        eventName.setValue("userlogout");
+        event.setAttributeNode(eventName);
+        doc.appendChild(event);
+        Element sender = doc.createElement("name");
+        sender.setTextContent(message.getName());
+        event.appendChild(sender);
+    }
+
+    protected void process(ServerSuccessLoginMessage message) {
+        Element success = doc.createElement("success");
+        int id = message.getSessionID();
+        Element session = doc.createElement("session");
+        session.setTextContent(String.valueOf(id));
+        success.appendChild(session);
+        doc.appendChild(success);
+    }
+
+    protected void process(ServerSuccessMessage message) {
+        Element success = doc.createElement("success");
+        doc.appendChild(success);
+    }
+
+    protected void process(ServerSuccessListMessage message) {
+        Element success = doc.createElement("success");
+        doc.appendChild(success);
+        Element listusers = doc.createElement("listusers");
+        ArrayList<User> list = message.getListusers();
+        for (User user : list) {
+            Element userElement = doc.createElement("user");
+            Element name = doc.createElement("name");
+            Element type = doc.createElement("type");
+            name.setTextContent(user.getName());
+            type.setTextContent(user.getType());
+            userElement.appendChild(name);
+            userElement.appendChild(type);
+            listusers.appendChild(userElement);
+        }
+        success.appendChild(listusers);
+    }
+
     @Override
-    protected void writeMessage(Message message) throws IOException {
+    protected void writeMessage(ServerMessage message) throws IOException {
         DocumentBuilder builder;
         try {
             builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
@@ -70,94 +152,23 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler {
             e.printStackTrace();
             return;
         }
-        Document doc = builder.newDocument();
-        if(message.getType() == MessageType.ERROR) {
-            Element error = doc.createElement("error");
-            doc.appendChild(error);
-            Element reason = doc.createElement("reason");
-            reason.setTextContent(message.getMessage());
-            error.appendChild(reason);
-        }
-        if(message.getType() == MessageType.MESSAGE) {
-            Element event = doc.createElement("event");
-            Attr eventName = doc.createAttribute("name");
-            eventName.setValue("message");
-            event.setAttributeNode(eventName);
-            doc.appendChild(event);
-            Element messageText = doc.createElement("message");
-            messageText.setTextContent(message.getMessage());
-            Element sender = doc.createElement("name");
-            sender.setTextContent(message.getSender());
-            event.appendChild(messageText);
-            event.appendChild(sender);
-        }
-        if(message.getType() == MessageType.USERLOGIN) {
-            Element event = doc.createElement("event");
-            Attr eventName = doc.createAttribute("name");
-            eventName.setValue("userlogin");
-            event.setAttributeNode(eventName);
-            doc.appendChild(event);
-            Element sender = doc.createElement("name");
-            sender.setTextContent(message.getMessage());
-            event.appendChild(sender);
-        }
-        if(message.getType() == MessageType.USERLOGOUT) {
-            Element event = doc.createElement("event");
-            Attr eventName = doc.createAttribute("name");
-            eventName.setValue("userlogout");
-            event.setAttributeNode(eventName);
-            doc.appendChild(event);
-            Element sender = doc.createElement("name");
-            sender.setTextContent(message.getMessage());
-            event.appendChild(sender);
-        }
-        if(message.getType() == MessageType.SUCCESS) {
-            Element success = doc.createElement("success");
-            String id = message.getMessage();
-            if(id != null) {
-                Element session = doc.createElement("session");
-                session.setTextContent(message.getMessage());
-                success.appendChild(session);
-            }
-            doc.appendChild(success);
-        }
-        if(message.getType() == MessageType.LIST) {
-            Element success = doc.createElement("success");
-            doc.appendChild(success);
-            Element listusers = doc.createElement("listusers");
-            String list = message.getMessage();
-            int i = 0;
-            while(!list.isEmpty()) {
-                i++;
-                String userName = list.substring(0,list.indexOf('$'));
-                Element user = doc.createElement("user");
-                Element name = doc.createElement("name");
-                Element type = doc.createElement("type");
-                name.setTextContent(userName);
-                type.setTextContent(String.valueOf(i));
-                user.appendChild(name);
-                user.appendChild(type);
-                listusers.appendChild(user);
-                list = list.substring(list.indexOf('$') + 1);
-            }
-            success.appendChild(listusers);
-        }
+        doc = builder.newDocument();
+        message.process(this);
         StringWriter sw = new StringWriter();
         try {
             TransformerFactory tf = TransformerFactory.newInstance();
             Transformer transformer = tf.newTransformer();
-            //transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
-            //transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-            //transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            //transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
             transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
             transformer.transform(new DOMSource(doc), new StreamResult(sw));
-        }  catch (TransformerException e) {
+        } catch (TransformerException e) {
                 e.printStackTrace();
         }
         //System.out.println(sw.toString());
-        messagesWriter.writeInt(sw.toString().length());
-        messagesWriter.writeBytes(sw.toString());
+        ByteBuffer utfMessage = Charset.forName("UTF-8").encode(sw.toString());
+        messagesWriter.writeInt(utfMessage.position());
+        byte[] bytes = new byte[utfMessage.position()];
+        utfMessage.get(bytes,0,utfMessage.position());
+        messagesWriter.write(bytes);
     }
 
     @Override

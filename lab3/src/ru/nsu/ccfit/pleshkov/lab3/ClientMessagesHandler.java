@@ -2,11 +2,12 @@ package ru.nsu.ccfit.pleshkov.lab3;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-abstract class ClientMessagesHandler extends MessagesHandler {
-    BlockingQueue<Message> getQueue() {
+abstract class ClientMessagesHandler extends MessagesHandler<ServerMessage, ClientMessage> {
+    BlockingQueue<ClientMessage> getQueue() {
         return queue;
     }
 
@@ -24,7 +25,7 @@ abstract class ClientMessagesHandler extends MessagesHandler {
 
     private int sessionID;
 
-    private BlockingQueue<Message> queue = new ArrayBlockingQueue<>(100);
+    private BlockingQueue<ClientMessage> queue = new ArrayBlockingQueue<>(100);
 
     @Override
     protected void fin() {
@@ -37,38 +38,44 @@ abstract class ClientMessagesHandler extends MessagesHandler {
     }
 
     @Override
-    protected void initWriting() throws IOException, InterruptedException {
-        Message message = queue.take();
-        Client.setLogin(message.getMessage());
-        setSessionID(message.getSessionID());
-        Client.getGui().startMessages();
-        writeMessage(new Message(Client.getLogin(),MessageType.LOGIN));
-    }
-
-    @Override
-    protected Message getMessage() throws IOException, InterruptedException {
+    protected ClientMessage getMessage() throws IOException, InterruptedException {
         return queue.take();
 
     }
 
+    protected void process(ServerChatMessage message) {
+        Client.getGui().updateText(message.getName() + ": " + message.getMessage());
+    }
+
+    protected void process(ServerSuccessListMessage message) {
+        ArrayList<User> list = message.getListusers();
+        StringBuilder builder = new StringBuilder();
+        for(User user : list) {
+            builder.append(user.getName());
+            builder.append(" via ");
+            builder.append(user.getType());
+            builder.append("\n");
+        }
+        Client.getGui().updateText(builder.toString());
+    }
+
+    protected void process(ServerSuccessLoginMessage message) {
+
+    }
+
+    protected void process(ServerUserloginMessage message) {
+        Client.getGui().updateText(message.getName() + " joined the chat");
+    }
+
+    protected void process(ServerUserlogoutMessage message) {
+        Client.getGui().updateText(message.getName() + " left the chat");
+    }
+
+    protected void process(ServerErrorMessage errorMessage) {
+
+    }
     @Override
-    protected void handleMessage(Message message) throws IOException {
-        String mes = message.getMessage();
-        if(message.getType() == MessageType.LIST) {
-            Client.getGui().updateText("LIST: " + mes);
-        }
-        if(message.getType() == MessageType.MESSAGE) {
-            Client.getGui().updateText(message.getSender() + ": " + mes);
-        }
-        if(message.getType() == MessageType.USERLOGIN) {
-            Client.getGui().updateText(mes + " joined the chat");
-        }
-        if(message.getType() == MessageType.USERLOGOUT) {
-            Client.getGui().updateText(mes + " left the chat");
-        }
-        if(message.getType() == MessageType.RELOGIN) {
-            Client.getGui().updateText(mes.substring(0,mes.indexOf('>')) + " relogged in as "
-                    + mes.substring(mes.indexOf('>') + 1));
-        }
+    protected void handleMessage(ServerMessage message) throws IOException {
+        message.process(this);
     }
 }

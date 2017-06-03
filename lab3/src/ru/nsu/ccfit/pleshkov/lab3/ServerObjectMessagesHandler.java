@@ -18,16 +18,16 @@ public class ServerObjectMessagesHandler extends ServerMessagesHandler {
     }
 
     @Override
-    protected Message readMessage() throws IOException, FailedReadException {
+    protected ClientMessage readMessage() throws IOException, FailedReadException {
         try {
-            return (Message) messagesReader.readObject();
+            return (ClientMessage) messagesReader.readObject();
         } catch (ClassNotFoundException e)  {
             throw new FailedReadException(e);
         }
     }
 
     @Override
-    protected void writeMessage(Message message) throws IOException {
+    protected void writeMessage(ServerMessage message) throws IOException {
         messagesWriter.writeObject(message);
     }
 

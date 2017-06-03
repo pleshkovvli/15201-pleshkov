@@ -15,7 +15,7 @@ public class ClientGUI extends JFrame {
     private JButton loginButton;
     private ClickButton logoutClick;
     private ClickButton listClick;
-    private ClickButton loginClick;
+    private LoginClickButton loginClick;
     private MessageForm messageForm;
     private Messages messages;
 
@@ -29,41 +29,18 @@ public class ClientGUI extends JFrame {
         messageText.setText("Login");
         messageForm = new MessageForm(message);
         messages = new Messages(messagesHistory);
-        logoutClick = new ClickButton(logoutButton) {
-            @Override
-            public void notifyObservers() {
-                for(Observer observer : observers) {
-                    observer.update("",MessageType.LOGOUT);
-                }
-            }
-        };
-        loginClick = new ClickButton(loginButton) {
-            @Override
-            public void notifyObservers() {
-                String text = loginText.getText();
-                if ((text != null) && (!text.isEmpty())) {
-                    for(Observer observer : observers) {
-                        observer.update(text, MessageType.LOGIN);
-                    }
-                }
-            }
-        };
-        listClick = new ClickButton(listButton) {
-            @Override
-            public void notifyObservers() {
-                for(Observer observer : observers) {
-                    observer.update("", MessageType.LIST);
-                }
-            }
-        };
+        logoutClick = new ClickButton(logoutButton);
+        loginClick = new LoginClickButton(loginButton);
+        listClick = new ClickButton(listButton);
         setVisible(true);
     }
 
-    void init(Observer messagesObserver) {
+    void init(Observer messagesObserver, Observer loginObserver,
+              SimpleObserver logoutObserver, SimpleObserver listObserver) {
         messageForm.addObserver(messagesObserver);
-        logoutClick.addObserver(messagesObserver);
-        loginClick.addObserver(messagesObserver);
-        listClick.addObserver(messagesObserver);
+        logoutClick.addSimpleObserver(logoutObserver);
+        loginClick.addObserver(loginObserver);
+        listClick.addSimpleObserver(listObserver);
     }
 
     void startMessages() {
@@ -76,10 +53,10 @@ public class ClientGUI extends JFrame {
         });
     }
 
-    abstract class ClickButton implements Observable {
+    private class LoginClickButton implements Observable {
         ArrayList<Observer> observers = new ArrayList<>();
 
-        ClickButton(JButton button) {
+        LoginClickButton(JButton button) {
             this.button = button;
             button.addActionListener((ActionEvent e) -> notifyObservers());
         }
@@ -87,14 +64,47 @@ public class ClientGUI extends JFrame {
         private JButton button;
 
         @Override
-        public void removeObserver(Observer observer) {
-            if(observers.contains(observer)) {
-                observers.remove(observer);
+        public void notifyObservers() {
+            for(Observer observer : observers) {
+                observer.update(loginText.getText());
             }
         }
 
         @Override
+        public void removeObserver(Observer observer) {
+            observers.remove(observer);
+        }
+
+        @Override
         public void addObserver(Observer observer) {
+            observers.add(observer);
+        }
+    }
+
+    private class ClickButton implements SimpleObservable {
+        ArrayList<SimpleObserver> observers = new ArrayList<>();
+
+        ClickButton(JButton button) {
+            this.button = button;
+            button.addActionListener((ActionEvent e) -> notifySimpleObservers());
+        }
+
+        private JButton button;
+
+        @Override
+        public void notifySimpleObservers() {
+            for(SimpleObserver observer : observers) {
+                observer.update();
+            }
+        }
+
+        @Override
+        public void removeSimpleObserver(SimpleObserver observer) {
+            observers.remove(observer);
+        }
+
+        @Override
+        public void addSimpleObserver(SimpleObserver observer) {
             observers.add(observer);
         }
     }
@@ -147,7 +157,7 @@ public class ClientGUI extends JFrame {
         @Override
         public void notifyObservers() {
             for(Observer observer : observers) {
-                observer.update(currentMessage, MessageType.MESSAGE);
+                observer.update(currentMessage);
             }
         }
 

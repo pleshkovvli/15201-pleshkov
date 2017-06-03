@@ -1,11 +1,12 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
-import javax.swing.*;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 
 public class Client {
+
+    final static private String CLIENT_NAME = "pleshkov.client";
 
     static String getLogin() {
         return login;
@@ -15,7 +16,7 @@ public class Client {
         Client.login = login;
     }
 
-    private static String login = "login";
+    private static String login;
 
     static ClientGUI getGui() {
         return gui;
@@ -33,12 +34,10 @@ public class Client {
             while(true) {
                 Socket socket = new Socket(InetAddress.getLocalHost(),Server.PORT);
                 ClientMessagesHandler handler = new ClientXMLMessagesHandler(socket);
-                handler.setInit(init);
-                if(!init) {
-                    handler.setSessionID(sessionID);
-                }
-                gui.init((String message, MessageType type) -> SwingUtilities.invokeLater(() ->
-                        handler.getQueue().add(new Message(message,type,handler.getSessionID()))));
+                gui.init((String name)  -> handler.getQueue().add(new ClientLoginMessage(name,CLIENT_NAME)),
+                        (String message) -> handler.getQueue().add(new ClientChatMessage(message,sessionID)),
+                        () -> handler.getQueue().add(new ClientLogoutMessage(sessionID)),
+                        () -> handler.getQueue().add(new ClientListMessage(sessionID)));
                 handler.begin("Writer", "Reader");
                 if(init) {
                     sessionID = handler.getSessionID();

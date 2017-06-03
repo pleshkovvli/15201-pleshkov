@@ -5,7 +5,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 
-abstract class MessagesHandler {
+abstract class MessagesHandler<IN extends Message, OUT extends Message> implements MessageProcessor {
     Socket getSocket() {
         return socket;
     }
@@ -29,46 +29,24 @@ abstract class MessagesHandler {
 
     private Thread reader;
 
-    void setInit(boolean init) {
-        this.init = init;
-    }
-
-    private boolean init;
-
     MessagesHandler(Socket socket) {
         this.socket = socket;
     }
 
-    abstract protected Message readMessage() throws IOException, InterruptedException, FailedReadException;
-    abstract protected Message getMessage() throws IOException, InterruptedException;
-    abstract protected void writeMessage(Message message) throws IOException, InterruptedException;
-    abstract protected void handleMessage(Message message) throws IOException, InterruptedException;
-    abstract protected void initWriting() throws IOException, InterruptedException;
+    abstract protected IN readMessage() throws IOException, InterruptedException, FailedReadException;
+    abstract protected OUT getMessage() throws IOException, InterruptedException;
+    abstract protected void writeMessage(OUT message) throws IOException, InterruptedException;
+    abstract protected void handleMessage(IN message) throws IOException, InterruptedException;
     abstract protected void endReading();
-    abstract protected void initReading() throws IOException, InterruptedException, FailedReadException;
     abstract protected void endWriting();
     abstract protected void fin();
 
+    public void process(Message message) {
+
+    }
+
     void begin(String readerName, String writerName) {
         writer = new Thread(() -> {
-            if(init) {
-                while (!Thread.interrupted()) {
-                    try {
-                        initWriting();
-                        break;
-                    } catch (SocketTimeoutException e) {
-                        if (socket.isClosed()) {
-                            e.printStackTrace();
-                            break;
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        break;
-                    } catch (InterruptedException e) {
-                        break;
-                    }
-                }
-            }
             while (!Thread.interrupted()) {
                 try {
                     writeMessage(getMessage());
@@ -89,27 +67,6 @@ abstract class MessagesHandler {
         }, writerName);
         writer.start();
         reader = new Thread(() -> {
-            if(init) {
-                while (!Thread.interrupted()) {
-                    try {
-                        initReading();
-                        break;
-                    } catch (SocketTimeoutException e) {
-                        if (socket.isClosed()) {
-                            e.printStackTrace();
-                            break;
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        break;
-                    } catch (FailedReadException e) {
-                        e.printStackTrace();
-                        break;
-                    } catch (InterruptedException e) {
-                        break;
-                    }
-                }
-            }
             while (!Thread.interrupted()) {
                 try {
                     handleMessage(readMessage());

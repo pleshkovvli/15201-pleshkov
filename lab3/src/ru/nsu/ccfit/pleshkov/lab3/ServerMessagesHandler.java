@@ -1,34 +1,49 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
+
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-abstract class ServerMessagesHandler extends MessagesHandler {
-    private BlockingQueue<Message> queue = new ArrayBlockingQueue<>(100);
+abstract class ServerMessagesHandler extends MessagesHandler<ClientMessage, ServerMessage> {
+    private BlockingQueue<ServerMessage> queue = new ArrayBlockingQueue<>(100);
 
     final private static AtomicInteger sessionID = new AtomicInteger(1);
 
     static private Map<Integer,ClientInfo> clients = new TreeMap<>();
 
+    final private static String LOG_FILE_NAME = "server.log";
+    public static Logger getLogger() {
+        return logger;
+    }
+
+    static private Logger logger;
+
     private ClientInfo client;
+
+    static {
+        PropertyConfigurator.configure("log4j.properties");
+        if(!Files.exists(Paths.get(LOG_FILE_NAME))) {
+            try {
+                Files.createFile(Paths.get(LOG_FILE_NAME));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        logger = Logger.getLogger("ServerLogger");
+    }
 
     ServerMessagesHandler(Socket socket) {
         super(socket);
-    }
-
-    @Override
-    protected void initWriting() throws IOException, InterruptedException {
-
-    }
-
-    @Override
-    protected void initReading() throws IOException, FailedReadException {
-
     }
 
     @Override
@@ -36,6 +51,7 @@ abstract class ServerMessagesHandler extends MessagesHandler {
         if(client != null) {
             client.setOnline(false);
         }
+        logger.info(Thread.currentThread().toString() + " finished reading");
     }
 
     @Override
@@ -43,103 +59,97 @@ abstract class ServerMessagesHandler extends MessagesHandler {
         if(client != null) {
             client.setOnline(false);
         }
+        logger.info(Thread.currentThread().toString() + " finished writing");
     }
 
     @Override
-    protected void fin() {}
+    protected void fin() {
+        logger.info("Started threads " + getWriter().toString() + ", " + getReader().toString());
+    }
 
     @Override
-    protected Message getMessage() throws IOException, InterruptedException {
+    protected ServerMessage getMessage() throws IOException, InterruptedException {
         return queue.take();
 
     }
 
-    @Override
-    protected void handleMessage(Message message) throws IOException {
-        if(message.getType() == MessageType.MESSAGE) {
-            if(client != null) {
-                message.setSender(client.getName());
-            } else {
-                client = clients.get(message.getSessionID());
-                if(client == null) {
-                    message = new Message("You haven't logged in yet",MessageType.ERROR);
-                    queue.add(message);
-                    return;
-                }
-                client.setOnline(true);
-            }
-            for(ClientInfo client : clients.values()) {
-                if((client.getHandler() != this) && client.isOnline()) {
-                    client.getHandler().queue.add(message);
-                }
-            }
-            return;
-        }
-        if(message.getType() == MessageType.LOGIN) {
-            String name = message.getMessage();
-            if(client != null && name.equals(client.getName())) {
+    protected void process(ClientChatMessage message) {
+        if(client == null) {
+            client = clients.get(message.getSessionID());
+            if(client == null) {
+                ServerErrorMessage errorMessage = new ServerErrorMessage("You haven't logged in yet");
+                queue.add(errorMessage);
                 return;
             }
-            for(ClientInfo client : clients.values()) {
-                if((client != this.client) && (client.getName().equals(name))) {
-                    queue.add(new Message("Name is already taken",MessageType.ERROR));
-                    return;
-                }
-            }
-            if(client != null) {
-                if(clients.containsKey(client.getSessionID())) {
-                    clients.remove(client.getSessionID());
-                } else {
-                    queue.add(new Message("Wrong sessionID",MessageType.ERROR));
-                    return;
-                }
-                message = new Message(client.getName() + ">" + name,MessageType.RELOGIN);
-            }
-            client = new ClientInfo(name,this);
-            int id = sessionID.getAndIncrement();
-            client.setSessionID(id);
             client.setOnline(true);
-            clients.put(id,client);
-            queue.add(new Message(String.valueOf(id),MessageType.SUCCESS));
-            for(ClientInfo client : clients.values()) {
-                if((client.getHandler() != this) && client.isOnline()) {
-                    client.getHandler().queue.add(new Message(message.getMessage(), MessageType.USERLOGIN,message.getSender()));
-                }
+        }
+        ServerChatMessage response = new ServerChatMessage(message.getMessage(),client.getName());
+        for(ClientInfo client : clients.values()) {
+            if((client.getHandler() != this) && client.isOnline()) {
+                client.getHandler().queue.add(response);
             }
+        }
+    }
+
+    protected void process(ClientLoginMessage message) {
+        if(client != null) {
+            queue.add(new ServerErrorMessage("Already logged in"));
             return;
         }
-        if(message.getType() == MessageType.LOGOUT) {
-            if(client != null) {
-                message.setMessage(client.getName());
-                if(clients.containsKey(message.getSessionID())) {
-                    clients.remove(message.getSessionID());
-                } else {
-                    queue.add(new Message("Wrong sessionID",MessageType.ERROR));
-                    return;
-                }
-            } else {
-                queue.add(new Message("You haven't logged in yet",MessageType.ERROR));
+        String name = message.getUserName();
+        for(ClientInfo client : clients.values()) {
+            if((client != this.client) && (client.getName().equals(name))) {
+                queue.add(new ServerErrorMessage("Name already had been taken"));
                 return;
             }
-            queue.add(new Message("",MessageType.SUCCESS));
-            for(ClientInfo client : clients.values()) {
-                if((client.getHandler() != this) && client.isOnline()) {
-                    client.getHandler().queue.add(new Message(message.getMessage(),MessageType.USERLOGOUT));
-                }
+        }
+        client = new ClientInfo(name,this);
+        int id = sessionID.getAndIncrement();
+        client.setSessionID(id);
+        client.setOnline(true);
+        clients.put(id,client);
+        queue.add(new ServerSuccessLoginMessage(id));
+        for(ClientInfo client : clients.values()) {
+            if((client.getHandler() != this) && client.isOnline()) {
+                client.getHandler().queue.add(new ServerUserloginMessage(message.getUserName()));
             }
-            endIt();
+        }
+    }
+
+    protected void process(ClientLogoutMessage message) {
+        String name;
+        if(client != null) {
+            name = client.getName();
+            if(clients.containsKey(message.getSessionID())) {
+                clients.remove(message.getSessionID());
+            } else {
+                queue.add(new ServerErrorMessage("Wrong sessionID"));
+                return;
+            }
+        } else {
+            queue.add(new ServerErrorMessage("You haven't logged in yet"));
             return;
         }
-        if(message.getType() == MessageType.LIST) {
-            StringBuilder builder = new StringBuilder();
-            for(ClientInfo client : clients.values()) {
-                if(client.isOnline()) {
-                    builder.append(client.getName());
-                    builder.append("$");
-                }
+        queue.add(new ServerSuccessMessage());
+        for(ClientInfo client : clients.values()) {
+            if((client.getHandler() != this) && client.isOnline()) {
+                client.getHandler().queue.add(new ServerUserlogoutMessage(name));
             }
-            message.setMessage(builder.toString().trim());
-            queue.add(message);
         }
+        endIt();
+    }
+
+    protected void process(ClientListMessage message) {
+        ArrayList<User> listusers = new ArrayList<>();
+        for(ClientInfo client : clients.values()) {
+            if(client.isOnline()) {
+                listusers.add(new User(client.getName(),client.getType()));
+            }
+        }
+        queue.add(new ServerSuccessListMessage(listusers));
+    }
+
+    protected void handleMessage(ClientMessage message) throws IOException {
+        message.process(this);
     }
 }

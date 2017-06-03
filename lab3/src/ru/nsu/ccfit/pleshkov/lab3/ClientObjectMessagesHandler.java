@@ -30,22 +30,6 @@ class ClientObjectMessagesHandler extends ClientMessagesHandler {
     }
 
     @Override
-    protected void initReading() throws IOException, InterruptedException, FailedReadException {
-        try {
-            Message message =  (Message) messagesReader.readObject();
-            while(message.getType() != MessageType.SUCCESS) {
-                if(message.getType() == MessageType.ERROR) {
-                    Client.getGui().errorText("ERROR: " + message.getMessage());
-                }
-                message =  (Message) messagesReader.readObject();
-            }
-            setSessionID(Integer.valueOf(message.getMessage()));
-        } catch (ClassNotFoundException e)  {
-            throw new FailedReadException(e);
-        }
-    }
-
-    @Override
     protected void endReading() {
         try {
             messagesReader.close();
@@ -58,19 +42,17 @@ class ClientObjectMessagesHandler extends ClientMessagesHandler {
     }
 
     @Override
-    protected Message readMessage() throws IOException, FailedReadException {
+    protected ServerMessage readMessage() throws IOException, FailedReadException {
         try {
-            return (Message) messagesReader.readObject();
+            return (ServerMessage) messagesReader.readObject();
         } catch (ClassNotFoundException e)  {
             throw new FailedReadException(e);
         }
     }
 
     @Override
-    protected void writeMessage(Message message) throws IOException {
+    protected void writeMessage(ClientMessage message) throws IOException {
         messagesWriter.writeObject(message);
-        if(message.getType() == MessageType.LOGOUT) {
-            endIt();
-        }
+
     }
 }

@@ -1,10 +1,10 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
-import com.sun.org.apache.regexp.internal.RE;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -18,8 +18,11 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.*;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
 
-public class ClientXMLMessagesHandler extends ClientMessagesHandler {
+class ClientXMLMessagesHandler extends ClientMessagesHandler {
 
     private DataInputStream messagesReader;
     private DataOutputStream messagesWriter;
@@ -38,34 +41,6 @@ public class ClientXMLMessagesHandler extends ClientMessagesHandler {
     }
 
     @Override
-    protected void initReading() throws IOException, InterruptedException, FailedReadException {
-        try {
-            String type = "";
-            Document document = null;
-            while(!type.equals("success")) {
-                DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-                int length = messagesReader.readInt();
-                byte[] bytes = new byte[length];
-                int read = 0;
-                while (read < length) {
-                    read += messagesReader.read(bytes,read,length - read);
-                }
-                System.out.println(new String(bytes));
-                document = builder.parse(new ByteArrayInputStream(bytes));
-                type = document.getDocumentElement().getTagName();
-                if(type.equals("error")) {
-                    Client.getGui().errorText("ERROR: " + document.getElementsByTagName("reason").item(0).getTextContent());
-                }
-            }
-            setSessionID(Integer.valueOf(document.getElementsByTagName("session").item(0).getTextContent()));
-        } catch (ParserConfigurationException e) {
-            e.printStackTrace();
-        } catch (SAXException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
     protected void endReading() {
         try {
             messagesReader.close();
@@ -78,7 +53,7 @@ public class ClientXMLMessagesHandler extends ClientMessagesHandler {
     }
 
     @Override
-    protected Message readMessage() throws IOException, FailedReadException {
+    protected ServerMessage readMessage() throws IOException, FailedReadException {
         try {
             DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
             int length = messagesReader.readInt();
@@ -88,35 +63,40 @@ public class ClientXMLMessagesHandler extends ClientMessagesHandler {
                 read += messagesReader.read(bytes,read,length - read);
             }
             //System.out.println(new String(bytes));
-            Document document = builder.parse(new ByteArrayInputStream(bytes));
+            Document document = builder.parse(new InputSource(
+                    new InputStreamReader(new ByteArrayInputStream(bytes),"UTF-8")));
             String type = document.getDocumentElement().getTagName();
             if(type.equals("error")) {
-                return new Message(document.getElementsByTagName("reason").item(0).getTextContent(), MessageType.ERROR);
+                return new ServerErrorMessage(document.getElementsByTagName("reason").item(0).getTextContent());
             }
             if(type.equals("event")) {
                 String event = document.getDocumentElement().getAttribute("name");
                 if(event.equals("message")) {
-                    return new Message(document.getElementsByTagName("message").item(0).getTextContent(),
-                            MessageType.MESSAGE,document.getElementsByTagName("name").item(0).getTextContent());
+                    return new ServerChatMessage(document.getElementsByTagName("message").item(0).getTextContent(),
+                            document.getElementsByTagName("name").item(0).getTextContent());
                 }
                 if(event.equals("userlogin")) {
-                    return new Message(document.getElementsByTagName("name").item(0).getTextContent(),MessageType.USERLOGIN);
+                    return new ServerUserloginMessage(document.getElementsByTagName("name").item(0).getTextContent());
                 }
                 if(event.equals("userlogout")) {
-                    return new Message(document.getElementsByTagName("name").item(0).getTextContent(),MessageType.USERLOGOUT);
+                    return new ServerUserlogoutMessage(document.getElementsByTagName("name").item(0).getTextContent());
                 }
             }
             if(type.equals("success")) {
                 NodeList list = document.getElementsByTagName("user");
                 if(list.getLength() == 0) {
-                    return new Message("",MessageType.SUCCESS);
+                    list = document.getElementsByTagName("session");
+                    if(list.getLength() > 0) {
+                        return new ServerSuccessLoginMessage(Integer.valueOf(list.item(0).getTextContent()));
+                    }
+                    return new ServerSuccessMessage();
                 }
-                StringBuilder stringBuilder = new StringBuilder();
+                ArrayList<User> listusers = new ArrayList<>();
                 for(int i = 0; i < list.getLength(); i++) {
-                    stringBuilder.append("\n");
-                    stringBuilder.append(list.item(i).getChildNodes().item(0).getTextContent());
+                    listusers.add(new User(list.item(i).getChildNodes().item(0).getTextContent(),
+                            list.item(i).getChildNodes().item(1).getTextContent()));
                 }
-                return new Message(stringBuilder.toString(),MessageType.LIST);
+                return new ServerSuccessListMessage(listusers);
             }
         } catch (ParserConfigurationException e) {
             throw new FailedReadException(e);
@@ -126,8 +106,60 @@ public class ClientXMLMessagesHandler extends ClientMessagesHandler {
         throw new FailedReadException();
     }
 
+    Document doc;
+
+    protected void process(ClientChatMessage message) {
+        Element event = doc.createElement("command");
+        Attr eventName = doc.createAttribute("name");
+        eventName.setValue("message");
+        event.setAttributeNode(eventName);
+        doc.appendChild(event);
+        Element messageText = doc.createElement("message");
+        messageText.setTextContent(message.getMessage());
+        Element sender = doc.createElement("session");
+        sender.setTextContent(String.valueOf(message.getSessionID()));
+        event.appendChild(messageText);
+        event.appendChild(sender);
+    }
+
+    protected void process(ClientListMessage message) {
+        Element event = doc.createElement("command");
+        Attr eventName = doc.createAttribute("name");
+        eventName.setValue("list");
+        event.setAttributeNode(eventName);
+        doc.appendChild(event);
+        Element sender = doc.createElement("session");
+        sender.setTextContent(String.valueOf(message.getSessionID()));
+        event.appendChild(sender);
+    }
+
+    protected void process(ClientLoginMessage message) {
+        Element event = doc.createElement("command");
+        Attr eventName = doc.createAttribute("name");
+        eventName.setValue("login");
+        event.setAttributeNode(eventName);
+        doc.appendChild(event);
+        Element sender = doc.createElement("name");
+        sender.setTextContent(message.getUserName());
+        event.appendChild(sender);
+        Element type = doc.createElement("type");
+        type.setTextContent(message.getClientName());
+        event.appendChild(type);
+    }
+
+    protected void process(ClientLogoutMessage message) {
+        Element event = doc.createElement("command");
+        Attr eventName = doc.createAttribute("name");
+        eventName.setValue("logout");
+        event.setAttributeNode(eventName);
+        doc.appendChild(event);
+        Element sender = doc.createElement("session");
+        sender.setTextContent(String.valueOf(message.getSessionID()));
+        event.appendChild(sender);
+    }
+
     @Override
-    protected void writeMessage(Message message) throws IOException {
+    protected void writeMessage(ClientMessage message) throws IOException {
         DocumentBuilder builder;
         try {
             builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
@@ -135,65 +167,22 @@ public class ClientXMLMessagesHandler extends ClientMessagesHandler {
             e.printStackTrace();
             return;
         }
-        Document doc = builder.newDocument();
-        if(message.getType() == MessageType.MESSAGE) {
-            Element event = doc.createElement("command");
-            Attr eventName = doc.createAttribute("name");
-            eventName.setValue("message");
-            event.setAttributeNode(eventName);
-            doc.appendChild(event);
-            Element messageText = doc.createElement("message");
-            messageText.setTextContent(message.getMessage());
-            Element sender = doc.createElement("session");
-            sender.setTextContent(String.valueOf(message.getSessionID()));
-            event.appendChild(messageText);
-            event.appendChild(sender);
-        }
-        if(message.getType() == MessageType.LIST) {
-            Element event = doc.createElement("command");
-            Attr eventName = doc.createAttribute("name");
-            eventName.setValue("list");
-            event.setAttributeNode(eventName);
-            doc.appendChild(event);
-            Element sender = doc.createElement("session");
-            sender.setTextContent(String.valueOf(message.getSessionID()));
-            event.appendChild(sender);
-        }
-        if(message.getType() == MessageType.LOGIN) {
-            Element event = doc.createElement("command");
-            Attr eventName = doc.createAttribute("name");
-            eventName.setValue("login");
-            event.setAttributeNode(eventName);
-            doc.appendChild(event);
-            Element sender = doc.createElement("name");
-            sender.setTextContent(message.getMessage());
-            event.appendChild(sender);
-        }
-        if(message.getType() == MessageType.LOGOUT) {
-            Element event = doc.createElement("command");
-            Attr eventName = doc.createAttribute("name");
-            eventName.setValue("logout");
-            event.setAttributeNode(eventName);
-            doc.appendChild(event);
-            Element sender = doc.createElement("session");
-            sender.setTextContent(String.valueOf(message.getSessionID()));
-            event.appendChild(sender);
-        }
+        doc = builder.newDocument();
+        message.process(this);
         StringWriter sw = new StringWriter();
         try {
             TransformerFactory tf = TransformerFactory.newInstance();
             Transformer transformer = tf.newTransformer();
-            //transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
-            //transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-            //transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            //transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
             transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
             transformer.transform(new DOMSource(doc), new StreamResult(sw));
         }  catch (TransformerException e) {
             e.printStackTrace();
         }
         //System.out.println(sw.toString());
-        messagesWriter.writeInt(sw.toString().length());
-        messagesWriter.writeBytes(sw.toString());
+        ByteBuffer utfMessage = Charset.forName("UTF-8").encode(sw.toString());
+        messagesWriter.writeInt(utfMessage.position());
+        byte[] bytes = new byte[utfMessage.position()];
+        utfMessage.get(bytes,0,utfMessage.position());
+        messagesWriter.write(bytes);
     }
 }
