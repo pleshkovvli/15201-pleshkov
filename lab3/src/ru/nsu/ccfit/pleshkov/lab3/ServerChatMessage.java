@@ -1,9 +1,9 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
-public class ServerChatMessage extends ServerMessage {
+class ServerChatMessage implements ServerMessage {
     final private String message;
 
-    public ServerChatMessage(String message, String name) {
+    ServerChatMessage(String message, String name) {
         this.message = message;
         this.name = name;
     }
@@ -17,4 +17,9 @@ public class ServerChatMessage extends ServerMessage {
     }
 
     final private String name;
+
+    @Override
+    public void process(ServerMessagesProcessor handler) {
+        handler.process(this);
+    }
 }

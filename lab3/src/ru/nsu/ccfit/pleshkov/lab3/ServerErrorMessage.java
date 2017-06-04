@@ -1,14 +1,19 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
-public class ServerErrorMessage extends ServerMessage {
-    public ServerErrorMessage(String reason) {
+class ServerErrorMessage implements ServerMessage {
+    ServerErrorMessage(String reason) {
         this.reason = reason;
     }
 
-    public String getReason() {
+    String getReason() {
         return reason;
     }
 
     final private String reason;
+
+    @Override
+    public void process(ServerMessagesProcessor handler) {
+        handler.process(this);
+    }
 
 }

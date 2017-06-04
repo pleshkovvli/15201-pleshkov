@@ -1,13 +1,18 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
-public class ClientListMessage extends ClientMessage {
+class ClientListMessage implements ClientMessage {
     public int getSessionID() {
         return sessionID;
     }
 
     final private int sessionID;
 
-    public ClientListMessage(int sessionID) {
+    ClientListMessage(int sessionID) {
         this.sessionID = sessionID;
+    }
+
+    @Override
+    public void process(ClientMessagesProcessor handler) {
+        handler.process(this);
     }
 }

@@ -1,15 +1,20 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
-public class ServerSuccessLoginMessage extends ServerMessage {
+class ServerSuccessLoginMessage implements ServerMessage {
     public int getSessionID() {
         return sessionID;
     }
 
-    public ServerSuccessLoginMessage(int sessionID) {
+    ServerSuccessLoginMessage(int sessionID) {
 
         this.sessionID = sessionID;
     }
 
     final private int sessionID;
+
+    @Override
+    public void process(ServerMessagesProcessor handler) {
+        handler.process(this);
+    }
 
 }

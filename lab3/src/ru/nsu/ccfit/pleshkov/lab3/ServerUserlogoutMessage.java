@@ -1,7 +1,7 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
-public class ServerUserlogoutMessage extends ServerMessage {
-    public ServerUserlogoutMessage(String name) {
+class ServerUserlogoutMessage implements ServerMessage {
+    ServerUserlogoutMessage(String name) {
         this.name = name;
     }
 
@@ -10,4 +10,9 @@ public class ServerUserlogoutMessage extends ServerMessage {
     }
 
     final private String name;
+
+    @Override
+    public void process(ServerMessagesProcessor handler) {
+        handler.process(this);
+    }
 }

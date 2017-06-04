@@ -1,8 +1,9 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
-class ServerUserloginMessage extends ServerMessage {
-    ServerUserloginMessage(String name) {
+class ServerUserloginMessage implements ServerMessage {
+    ServerUserloginMessage(String name, String type) {
         this.name = name;
+        this.type = type;
     }
 
     public String getName() {
@@ -10,4 +11,15 @@ class ServerUserloginMessage extends ServerMessage {
     }
 
     final private String name;
+
+    String getType() {
+        return type;
+    }
+
+    final private String type;
+
+    @Override
+    public void process(ServerMessagesProcessor handler) {
+        handler.process(this);
+    }
 }

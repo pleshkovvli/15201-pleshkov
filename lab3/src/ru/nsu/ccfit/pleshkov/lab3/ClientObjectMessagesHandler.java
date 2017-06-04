@@ -7,12 +7,11 @@ import java.net.Socket;
 
 class ClientObjectMessagesHandler extends ClientMessagesHandler {
 
-    ClientObjectMessagesHandler(Socket socket) throws IOException {
-        super(socket);
+    ClientObjectMessagesHandler(Socket socket, String clientName) throws IOException {
+        super(socket,clientName);
         messagesReader = new ObjectInputStream(socket.getInputStream());
         messagesWriter = new ObjectOutputStream(socket.getOutputStream());
     }
-
 
     private ObjectInputStream messagesReader;
     private ObjectOutputStream messagesWriter;

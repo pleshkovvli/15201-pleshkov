@@ -6,13 +6,32 @@ import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-abstract class ClientMessagesHandler extends MessagesHandler<ServerMessage, ClientMessage> {
-    BlockingQueue<ClientMessage> getQueue() {
-        return queue;
+abstract class ClientMessagesHandler extends MessagesHandler<ServerMessage, ClientMessage>
+implements MessageObservable{
+    private ArrayList<MessageObserver> observers = new ArrayList<>();
+
+    final private String clientName;
+
+    @Override
+    public void notifyMessageObservers(Message message) {
+        for(MessageObserver observer : observers) {
+            observer.update(message);
+        }
     }
 
-    ClientMessagesHandler(Socket socket) throws IOException {
+    @Override
+    public void removeMessageObserver(MessageObserver observer) {
+        observers.remove(observer);
+    }
+
+    @Override
+    public void addMessageObserver(MessageObserver observer) {
+        observers.add(observer);
+    }
+
+    ClientMessagesHandler(Socket socket, String clientName) throws IOException {
         super(socket);
+        this.clientName = clientName;
     }
 
     int getSessionID() {
@@ -26,6 +45,23 @@ abstract class ClientMessagesHandler extends MessagesHandler<ServerMessage, Clie
     private int sessionID;
 
     private BlockingQueue<ClientMessage> queue = new ArrayBlockingQueue<>(100);
+
+    void addChatMessage(String message)  {
+        queue.add(new ClientChatMessage(message,sessionID));
+    }
+
+    void addLoginMessage(String name)  {
+        queue.add(new ClientLoginMessage(name,clientName));
+    }
+
+    void addLogoutMessage()  {
+        queue.add(new ClientLogoutMessage(sessionID));
+    }
+
+    void addListMessage() {
+        queue.add(new ClientListMessage(sessionID));
+    }
+
 
     @Override
     protected void fin() {
@@ -43,39 +79,9 @@ abstract class ClientMessagesHandler extends MessagesHandler<ServerMessage, Clie
 
     }
 
-    protected void process(ServerChatMessage message) {
-        Client.getGui().updateText(message.getName() + ": " + message.getMessage());
-    }
-
-    protected void process(ServerSuccessListMessage message) {
-        ArrayList<User> list = message.getListusers();
-        StringBuilder builder = new StringBuilder();
-        for(User user : list) {
-            builder.append(user.getName());
-            builder.append(" via ");
-            builder.append(user.getType());
-            builder.append("\n");
-        }
-        Client.getGui().updateText(builder.toString());
-    }
-
-    protected void process(ServerSuccessLoginMessage message) {
-
-    }
-
-    protected void process(ServerUserloginMessage message) {
-        Client.getGui().updateText(message.getName() + " joined the chat");
-    }
-
-    protected void process(ServerUserlogoutMessage message) {
-        Client.getGui().updateText(message.getName() + " left the chat");
-    }
-
-    protected void process(ServerErrorMessage errorMessage) {
-
-    }
     @Override
     protected void handleMessage(ServerMessage message) throws IOException {
-        message.process(this);
+        notifyMessageObservers(message);
     }
 }
+

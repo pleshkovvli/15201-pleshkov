@@ -1,9 +1,6 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
-import org.w3c.dom.Attr;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
+import org.w3c.dom.*;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -22,13 +19,13 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 
-class ClientXMLMessagesHandler extends ClientMessagesHandler {
+class ClientXMLMessagesHandler extends ClientMessagesHandler implements ClientMessagesProcessor  {
 
     private DataInputStream messagesReader;
     private DataOutputStream messagesWriter;
 
-    ClientXMLMessagesHandler(Socket socket) throws IOException {
-        super(socket);
+    ClientXMLMessagesHandler(Socket socket, String clientName) throws IOException {
+        super(socket,clientName);
         messagesWriter = new DataOutputStream(socket.getOutputStream());
         messagesWriter.flush();
         messagesReader = new DataInputStream(socket.getInputStream());
@@ -76,7 +73,15 @@ class ClientXMLMessagesHandler extends ClientMessagesHandler {
                             document.getElementsByTagName("name").item(0).getTextContent());
                 }
                 if(event.equals("userlogin")) {
-                    return new ServerUserloginMessage(document.getElementsByTagName("name").item(0).getTextContent());
+                    String clientType;
+                    Node te = document.getElementsByTagName("type").item(0);
+                    if(te == null) {
+                        clientType = "unknown";
+                    } else {
+                        clientType = te.getTextContent();
+                    }
+                    return new ServerUserloginMessage(document.getElementsByTagName("name").item(0).getTextContent(),
+                            clientType);
                 }
                 if(event.equals("userlogout")) {
                     return new ServerUserlogoutMessage(document.getElementsByTagName("name").item(0).getTextContent());
@@ -108,7 +113,8 @@ class ClientXMLMessagesHandler extends ClientMessagesHandler {
 
     Document doc;
 
-    protected void process(ClientChatMessage message) {
+    @Override
+    public void process(ClientChatMessage message) {
         Element event = doc.createElement("command");
         Attr eventName = doc.createAttribute("name");
         eventName.setValue("message");
@@ -122,7 +128,8 @@ class ClientXMLMessagesHandler extends ClientMessagesHandler {
         event.appendChild(sender);
     }
 
-    protected void process(ClientListMessage message) {
+    @Override
+    public void process(ClientListMessage message) {
         Element event = doc.createElement("command");
         Attr eventName = doc.createAttribute("name");
         eventName.setValue("list");
@@ -133,7 +140,8 @@ class ClientXMLMessagesHandler extends ClientMessagesHandler {
         event.appendChild(sender);
     }
 
-    protected void process(ClientLoginMessage message) {
+    @Override
+    public void process(ClientLoginMessage message) {
         Element event = doc.createElement("command");
         Attr eventName = doc.createAttribute("name");
         eventName.setValue("login");
@@ -147,7 +155,8 @@ class ClientXMLMessagesHandler extends ClientMessagesHandler {
         event.appendChild(type);
     }
 
-    protected void process(ClientLogoutMessage message) {
+    @Override
+    public void process(ClientLogoutMessage message) {
         Element event = doc.createElement("command");
         Attr eventName = doc.createAttribute("name");
         eventName.setValue("logout");
@@ -169,20 +178,17 @@ class ClientXMLMessagesHandler extends ClientMessagesHandler {
         }
         doc = builder.newDocument();
         message.process(this);
-        StringWriter sw = new StringWriter();
+        ByteArrayOutputStream ba = new ByteArrayOutputStream();
         try {
             TransformerFactory tf = TransformerFactory.newInstance();
             Transformer transformer = tf.newTransformer();
             transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-            transformer.transform(new DOMSource(doc), new StreamResult(sw));
+            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+            transformer.transform(new DOMSource(doc), new StreamResult(ba));
         }  catch (TransformerException e) {
             e.printStackTrace();
         }
-        //System.out.println(sw.toString());
-        ByteBuffer utfMessage = Charset.forName("UTF-8").encode(sw.toString());
-        messagesWriter.writeInt(utfMessage.position());
-        byte[] bytes = new byte[utfMessage.position()];
-        utfMessage.get(bytes,0,utfMessage.position());
-        messagesWriter.write(bytes);
+        messagesWriter.writeInt(ba.size());
+        messagesWriter.write(ba.toByteArray());
     }
 }

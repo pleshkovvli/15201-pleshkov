@@ -3,7 +3,7 @@ package ru.nsu.ccfit.pleshkov.lab3;
 class ClientInfo {
     private String name;
 
-    public String getType() {
+    String getType() {
         return type;
     }
 
@@ -37,8 +37,9 @@ class ClientInfo {
         return handler;
     }
 
-    ClientInfo(String name, ServerMessagesHandler handler) {
+    ClientInfo(String name, String type, ServerMessagesHandler handler) {
         this.name = name;
+        this.type = type;
         this.handler = handler;
     }
 }

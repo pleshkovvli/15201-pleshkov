@@ -5,7 +5,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 
-abstract class MessagesHandler<IN extends Message, OUT extends Message> implements MessageProcessor {
+abstract class MessagesHandler<IN extends Message, OUT extends Message> {
     Socket getSocket() {
         return socket;
     }
@@ -40,10 +40,6 @@ abstract class MessagesHandler<IN extends Message, OUT extends Message> implemen
     abstract protected void endReading();
     abstract protected void endWriting();
     abstract protected void fin();
-
-    public void process(Message message) {
-
-    }
 
     void begin(String readerName, String writerName) {
         writer = new Thread(() -> {

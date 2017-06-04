@@ -1,52 +1,71 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
-import java.io.*;
-import java.net.InetAddress;
-import java.net.Socket;
+import java.util.ArrayList;
 
-public class Client {
+class Client implements ServerMessagesProcessor {
 
-    final static private String CLIENT_NAME = "pleshkov.client";
-
-    static String getLogin() {
-        return login;
-    }
-
-    static void setLogin(String login) {
-        Client.login = login;
-    }
-
-    private static String login;
-
-    static ClientGUI getGui() {
+    ClientGUI getGui() {
         return gui;
     }
 
-    private static ClientGUI gui;
-
-    static private int sessionID;
-
-    static private boolean init = true;
-
-    public static void main(String[] args) throws InterruptedException {
-        try {
-            gui = new ClientGUI();
-            while(true) {
-                Socket socket = new Socket(InetAddress.getLocalHost(),Server.PORT);
-                ClientMessagesHandler handler = new ClientXMLMessagesHandler(socket);
-                gui.init((String name)  -> handler.getQueue().add(new ClientLoginMessage(name,CLIENT_NAME)),
-                        (String message) -> handler.getQueue().add(new ClientChatMessage(message,sessionID)),
-                        () -> handler.getQueue().add(new ClientLogoutMessage(sessionID)),
-                        () -> handler.getQueue().add(new ClientListMessage(sessionID)));
-                handler.begin("Writer", "Reader");
-                if(init) {
-                    sessionID = handler.getSessionID();
-                }
-                init = false;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(0);
-        }
+    void setGui(ClientGUI gui) {
+        this.gui = gui;
     }
+
+    private ClientGUI gui;
+
+    ClientMessagesHandler getHandler() {
+        return handler;
+    }
+
+    void setHandler(ClientMessagesHandler handler) {
+        this.handler = handler;
+    }
+
+    private ClientMessagesHandler handler;
+
+    @Override
+    public void process(ServerChatMessage message) {
+        gui.getMessage(message.getMessage(),message.getName());
+    }
+
+    @Override
+    public void process(ServerSuccessMessage message) {
+
+    }
+
+    @Override
+    public void process(ServerSuccessListMessage message) {
+        ArrayList<User> list = message.getListusers();
+        StringBuilder builder = new StringBuilder();
+        for(User user : list) {
+            builder.append(user.getName());
+            builder.append("$");
+            builder.append(user.getType());
+            builder.append("\n");
+        }
+        gui.getList(builder.toString());
+    }
+
+    @Override
+    public void process(ServerSuccessLoginMessage message) {
+        handler.setSessionID(message.getSessionID());
+        gui.startMessages();
+    }
+
+    @Override
+    public void process(ServerUserloginMessage message) {
+        gui.getUserlogin(message.getName(),message.getType());
+    }
+
+    @Override
+    public void process(ServerUserlogoutMessage message) {
+        gui.getUserlogout(message.getName());
+    }
+
+    @Override
+    public void process(ServerErrorMessage errorMessage) {
+        gui.getError(errorMessage.getReason());
+    }
+
 }

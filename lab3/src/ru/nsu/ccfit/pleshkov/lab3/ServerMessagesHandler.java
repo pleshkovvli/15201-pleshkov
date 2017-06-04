@@ -14,7 +14,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-abstract class ServerMessagesHandler extends MessagesHandler<ClientMessage, ServerMessage> {
+abstract class ServerMessagesHandler extends MessagesHandler<ClientMessage, ServerMessage>
+implements ClientMessagesProcessor {
     private BlockingQueue<ServerMessage> queue = new ArrayBlockingQueue<>(100);
 
     final private static AtomicInteger sessionID = new AtomicInteger(1);
@@ -73,7 +74,8 @@ abstract class ServerMessagesHandler extends MessagesHandler<ClientMessage, Serv
 
     }
 
-    protected void process(ClientChatMessage message) {
+    @Override
+    public void process(ClientChatMessage message) {
         if(client == null) {
             client = clients.get(message.getSessionID());
             if(client == null) {
@@ -91,7 +93,8 @@ abstract class ServerMessagesHandler extends MessagesHandler<ClientMessage, Serv
         }
     }
 
-    protected void process(ClientLoginMessage message) {
+    @Override
+    public void process(ClientLoginMessage message) {
         if(client != null) {
             queue.add(new ServerErrorMessage("Already logged in"));
             return;
@@ -103,7 +106,7 @@ abstract class ServerMessagesHandler extends MessagesHandler<ClientMessage, Serv
                 return;
             }
         }
-        client = new ClientInfo(name,this);
+        client = new ClientInfo(name,message.getClientName(),this);
         int id = sessionID.getAndIncrement();
         client.setSessionID(id);
         client.setOnline(true);
@@ -111,12 +114,13 @@ abstract class ServerMessagesHandler extends MessagesHandler<ClientMessage, Serv
         queue.add(new ServerSuccessLoginMessage(id));
         for(ClientInfo client : clients.values()) {
             if((client.getHandler() != this) && client.isOnline()) {
-                client.getHandler().queue.add(new ServerUserloginMessage(message.getUserName()));
+                client.getHandler().queue.add(new ServerUserloginMessage(message.getUserName(),message.getClientName()));
             }
         }
     }
 
-    protected void process(ClientLogoutMessage message) {
+    @Override
+    public void process(ClientLogoutMessage message) {
         String name;
         if(client != null) {
             name = client.getName();
@@ -139,7 +143,8 @@ abstract class ServerMessagesHandler extends MessagesHandler<ClientMessage, Serv
         endIt();
     }
 
-    protected void process(ClientListMessage message) {
+    @Override
+    public void process(ClientListMessage message) {
         ArrayList<User> listusers = new ArrayList<>();
         for(ClientInfo client : clients.values()) {
             if(client.isOnline()) {

@@ -7,11 +7,11 @@ class User {
         return name;
     }
 
-    public String getType() {
+    String getType() {
         return type;
     }
 
-    public User(String name, String type) {
+    User(String name, String type) {
 
         this.name = name;
         this.type = type;

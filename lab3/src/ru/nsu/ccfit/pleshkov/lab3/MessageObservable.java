@@ -1,7 +1,7 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
-public interface MessageObservable {
-    void addObserver(MessageObserver observer);
-    void notifyObservers();
-    void removeObserver(MessageObserver observer);
+interface MessageObservable<T extends Message> {
+    void addMessageObserver(MessageObserver<T> observer);
+    void notifyMessageObservers(T message);
+    void removeMessageObserver(MessageObserver<T> observer);
 }

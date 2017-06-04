@@ -3,6 +3,7 @@ package ru.nsu.ccfit.pleshkov.lab3;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -15,9 +16,10 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
-class ServerXMLMessagesHandler extends ServerMessagesHandler {
+class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMessagesProcessor {
     private DataInputStream messagesReader;
     private DataOutputStream messagesWriter;
 
@@ -39,8 +41,9 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler {
             while (read < length) {
                 read += messagesReader.read(bytes,read,length - read);
             }
-            //System.out.println(new String(bytes));
-            Document document = builder.parse(new ByteArrayInputStream(bytes));
+            System.out.println(new String(bytes, StandardCharsets.UTF_8));
+            Document document = builder.parse(new InputSource(
+                    new InputStreamReader(new ByteArrayInputStream(bytes),"UTF-8")));
             String type = document.getDocumentElement().getAttribute("name");
             if(type.equals("message")) {
                 return new ClientChatMessage(document.getElementsByTagName("message").item(0).getTextContent(),
@@ -67,7 +70,8 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler {
 
     private Document doc;
 
-    protected void process(ServerErrorMessage message) {
+    @Override
+    public void process(ServerErrorMessage message) {
         Element error = doc.createElement("error");
         doc.appendChild(error);
         Element reason = doc.createElement("reason");
@@ -75,7 +79,8 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler {
         error.appendChild(reason);
     }
 
-    protected void process(ServerChatMessage message) {
+    @Override
+    public void process(ServerChatMessage message) {
         Element event = doc.createElement("event");
         Attr eventName = doc.createAttribute("name");
         eventName.setValue("message");
@@ -89,7 +94,8 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler {
         event.appendChild(sender);
     }
 
-    protected void process(ServerUserloginMessage message) {
+    @Override
+    public void process(ServerUserloginMessage message) {
         Element event = doc.createElement("event");
         Attr eventName = doc.createAttribute("name");
         eventName.setValue("userlogin");
@@ -100,7 +106,8 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler {
         event.appendChild(sender);
     }
 
-    protected void process(ServerUserlogoutMessage message) {
+    @Override
+    public void process(ServerUserlogoutMessage message) {
         Element event = doc.createElement("event");
         Attr eventName = doc.createAttribute("name");
         eventName.setValue("userlogout");
@@ -111,7 +118,8 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler {
         event.appendChild(sender);
     }
 
-    protected void process(ServerSuccessLoginMessage message) {
+    @Override
+    public void process(ServerSuccessLoginMessage message) {
         Element success = doc.createElement("success");
         int id = message.getSessionID();
         Element session = doc.createElement("session");
@@ -120,12 +128,14 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler {
         doc.appendChild(success);
     }
 
-    protected void process(ServerSuccessMessage message) {
+    @Override
+    public void process(ServerSuccessMessage message) {
         Element success = doc.createElement("success");
         doc.appendChild(success);
     }
 
-    protected void process(ServerSuccessListMessage message) {
+    @Override
+    public void process(ServerSuccessListMessage message) {
         Element success = doc.createElement("success");
         doc.appendChild(success);
         Element listusers = doc.createElement("listusers");
@@ -154,21 +164,18 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler {
         }
         doc = builder.newDocument();
         message.process(this);
-        StringWriter sw = new StringWriter();
+        ByteArrayOutputStream ba = new ByteArrayOutputStream();
         try {
             TransformerFactory tf = TransformerFactory.newInstance();
             Transformer transformer = tf.newTransformer();
             transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-            transformer.transform(new DOMSource(doc), new StreamResult(sw));
-        } catch (TransformerException e) {
-                e.printStackTrace();
+            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+            transformer.transform(new DOMSource(doc), new StreamResult(ba));
+        }  catch (TransformerException e) {
+            e.printStackTrace();
         }
-        //System.out.println(sw.toString());
-        ByteBuffer utfMessage = Charset.forName("UTF-8").encode(sw.toString());
-        messagesWriter.writeInt(utfMessage.position());
-        byte[] bytes = new byte[utfMessage.position()];
-        utfMessage.get(bytes,0,utfMessage.position());
-        messagesWriter.write(bytes);
+        messagesWriter.writeInt(ba.size());
+        messagesWriter.write(ba.toByteArray());
     }
 
     @Override

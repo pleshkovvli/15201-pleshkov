@@ -1,19 +1,24 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
-class ClientLoginMessage extends ClientMessage {
-    public ClientLoginMessage(String userName, String clientName) {
+class ClientLoginMessage implements ClientMessage {
+    ClientLoginMessage(String userName, String clientName) {
         this.userName = userName;
         this.clientName = clientName;
     }
 
-    public String getUserName() {
+    String getUserName() {
         return userName;
     }
 
-    public String getClientName() {
+    String getClientName() {
         return clientName;
     }
 
     final private String userName;
     final private String clientName;
+
+    @Override
+    public void process(ClientMessagesProcessor handler) {
+        handler.process(this);
+    }
 }

@@ -1,9 +1,9 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
-public class ClientChatMessage extends ClientMessage {
+class ClientChatMessage implements ClientMessage {
     final private String message;
 
-    public ClientChatMessage(String message, int sessionID) {
+    ClientChatMessage(String message, int sessionID) {
         this.message = message;
         this.sessionID = sessionID;
     }
@@ -17,4 +17,9 @@ public class ClientChatMessage extends ClientMessage {
     }
 
     final private int sessionID;
+
+    @Override
+    public void process(ClientMessagesProcessor handler) {
+        handler.process(this);
+    }
 }
