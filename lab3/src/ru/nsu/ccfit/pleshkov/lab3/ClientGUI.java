@@ -16,7 +16,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Semaphore;
 
 public class ClientGUI extends JFrame implements ClientInterface {
     private JPanel Panel;
@@ -32,14 +31,17 @@ public class ClientGUI extends JFrame implements ClientInterface {
     private Userlist list;
     private SimpleObserver listObserver;
     private SimpleObserver fin;
-    private Semaphore semaphore;
+    private boolean loggedOut = false;
+    private boolean failedLoggedOut = false;
+    private boolean loggedIn = false;
+    private boolean listed = false;
+    final private Object loggedOutLock = new Object();
 
     private BlockingQueue<String> sendedMessages = new ArrayBlockingQueue<>(10);
 
     ClientGUI() {
         setContentPane(Panel);
         setBounds(400, 200, 600, 500);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         logoutButton.setText("Logout");
         messageForm = new MessageForm(currentMessage);
         logoutClick = new LogoutButton(logoutButton);
@@ -68,14 +70,15 @@ public class ClientGUI extends JFrame implements ClientInterface {
             loginText.setText(message);
         }));
         logoutClick.clearObservers();
-        //logoutClick.addSimpleObserver(() -> SwingUtilities.invokeLater(logoutObserver::update));
         logoutClick.addSimpleObserver(logoutObserver);
         this.listObserver = listObserver;
     }
 
     void startMessages() {
-        semaphore = new Semaphore(0);
+        loggedIn = true;
+        loggedOut = false;
         dialog.dispose();
+        listed = false;
         listObserver.update();
         this.setVisible(true);
     }
@@ -88,12 +91,20 @@ public class ClientGUI extends JFrame implements ClientInterface {
         @Override
         public void notifySimpleObservers() {
             super.notifySimpleObservers();
-            try {
-                semaphore.acquire();
-                //semaphore.tryAcquire(1000, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            synchronized (loggedOutLock) {
+                try {
+                    while (!loggedOut) {
+                        loggedOutLock.wait();
+                        if(failedLoggedOut) {
+                            failedLoggedOut = false;
+                            return;
+                        }
+                    }
+                } catch (InterruptedException e) {
+
+                }
             }
+            loggedIn = false;
             list.clear();
             ClientGUI.this.setVisible(false);
             fin.update();
@@ -267,7 +278,10 @@ public class ClientGUI extends JFrame implements ClientInterface {
                 e.printStackTrace();
             }
         } else {
-            semaphore.release();
+            synchronized (loggedOutLock) {
+                loggedOut = true;
+                loggedOutLock.notifyAll();
+            }
         }
     }
 
@@ -278,11 +292,34 @@ public class ClientGUI extends JFrame implements ClientInterface {
 
     @Override
     public void showError(String error) {
-        messages.errorText(error);
+        if(!loggedIn) {
+            dialog.showError();
+            return;
+        }
+        if(!listed) {
+            listed = true;
+            messages.errorText(error);
+            return;
+        }
+        if(sendedMessages.size() > 0) {
+            try {
+                messages.errorText(sendedMessages.take() + "\n"
+                + error);
+            }  catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        } else {
+            synchronized (loggedOutLock) {
+                messages.errorText(error);
+                failedLoggedOut = true;
+                loggedOutLock.notifyAll();
+            }
+        }
     }
 
     @Override
     public void showList(String listString) {
+        listed = true;
         list.getList(listString);
     }
 
@@ -302,7 +339,6 @@ public class ClientGUI extends JFrame implements ClientInterface {
             addAction((ActionEvent e) -> {
                 currentText = form.getText();
                 sendedMessages.add(currentText);
-                //messages.updateText(messageForm.currentText);
                 messageForm.form.setText("");
                 messageForm.notifyObservers();
             });

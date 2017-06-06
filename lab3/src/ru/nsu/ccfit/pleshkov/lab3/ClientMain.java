@@ -24,9 +24,13 @@ public class ClientMain {
         client.setGui(new ClientGUI());
         Thread myThread = Thread.currentThread();
         while(loop) {
-            client.getGui().init(
-                    (String name) -> {
-                        try {
+            client.getGui().init(new Observer() {
+                private boolean in = true;
+
+                @Override
+                public void update(String message) {
+                    try {
+                        if(in) {
                             Socket socket = new Socket(config.getAddress(),config.getPort());
                             if(config.getType().equals("xml")) {
                                 client.setHandler(new ClientXMLMessagesHandler(socket, XML_CLIENT_NAME,client));
@@ -39,13 +43,15 @@ public class ClientMain {
                                     message.process(client);
                                 }
                             });
-                            client.addLoginMessage(name);
-                            client.getHandler().begin("Writer", "Reader");
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            loop = false;
+                            client.begin();
+                            in = false;
                         }
-                    },
+                        client.addLoginMessage(message);
+                    } catch (IOException e) {
+                        loop = false;
+                    }
+                }
+            },
                     client::addChatMessage,
                     client::addLogoutMessage,
                     client::addListMessage,

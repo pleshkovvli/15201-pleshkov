@@ -19,6 +19,9 @@ import java.util.ArrayList;
 
 class ClientXMLMessagesHandler extends ClientMessagesHandler implements ClientMessagesProcessor  {
 
+    static private final int MAX_MESSAGE_SIZE = 10000;
+    private byte[] bytes = new byte[MAX_MESSAGE_SIZE];
+
     private DataInputStream messagesReader;
     private DataOutputStream messagesWriter;
 
@@ -55,13 +58,15 @@ class ClientXMLMessagesHandler extends ClientMessagesHandler implements ClientMe
         try {
             DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
             int length = messagesReader.readInt();
-            byte[] bytes = new byte[length];
+            if(length <= 0 || length > MAX_MESSAGE_SIZE) {
+                throw new FailedReadException();
+            }
             int read = 0;
             while (read < length) {
                 read += messagesReader.read(bytes,read,length - read);
             }
             Document document = builder.parse(new InputSource(
-                    new InputStreamReader(new ByteArrayInputStream(bytes),"UTF-8")));
+                    new InputStreamReader(new ByteArrayInputStream(bytes,0,length),"UTF-8")));
             String type = document.getDocumentElement().getTagName();
             if(type.equals("error")) {
                 return new ServerErrorMessage(document.getElementsByTagName("reason").item(0).getTextContent());
@@ -103,10 +108,8 @@ class ClientXMLMessagesHandler extends ClientMessagesHandler implements ClientMe
                 }
                 return new ServerSuccessListMessage(listusers);
             }
-        } catch (ParserConfigurationException e) {
+        } catch (ParserConfigurationException | SAXException e) {
             throw new FailedReadException(e);
-        } catch (SAXException e) {
-            e.printStackTrace();
         }
         throw new FailedReadException();
     }
@@ -173,7 +176,6 @@ class ClientXMLMessagesHandler extends ClientMessagesHandler implements ClientMe
         try {
             builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
         } catch (ParserConfigurationException e) {
-            e.printStackTrace();
             return;
         }
         doc = builder.newDocument();

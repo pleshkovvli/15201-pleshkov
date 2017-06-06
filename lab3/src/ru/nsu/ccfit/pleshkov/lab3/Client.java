@@ -1,8 +1,11 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
+import org.omg.CORBA.TIMEOUT;
+
 import java.util.ArrayList;
 
 class Client implements ServerMessagesProcessor {
+    final static private int TIMEOUT = 1000;
 
     void setUnsetHandler(boolean unsetHandler) {
         this.unsetHandler = unsetHandler;
@@ -55,6 +58,10 @@ class Client implements ServerMessagesProcessor {
 
     void endIt() {
         handler.endIt();
+    }
+
+    void begin() {
+        handler.begin("Writer", "Reader",TIMEOUT);
     }
 
     void waitEnd() {

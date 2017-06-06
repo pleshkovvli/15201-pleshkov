@@ -1,5 +1,6 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
+import com.sun.xml.internal.stream.writers.XMLOutputSource;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -19,6 +20,9 @@ import java.util.ArrayList;
 class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMessagesProcessor {
     private DataInputStream messagesReader;
     private DataOutputStream messagesWriter;
+
+    static private final int MAX_MESSAGE_SIZE = 10000;
+    private byte[] bytes = new byte[MAX_MESSAGE_SIZE];
 
     ServerXMLMessagesHandler(Socket socket) throws IOException {
         super(socket);
@@ -43,14 +47,17 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMe
         try {
             DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
             int length = messagesReader.readInt();
-            byte[] bytes = new byte[length];
+            if(length <= 0 || length > MAX_MESSAGE_SIZE) {
+                throw new FailedReadException();
+            }
             int read = 0;
             while (read < length) {
                 read += messagesReader.read(bytes,read,length - read);
             }
             Document document = builder.parse(new InputSource(
-                    new InputStreamReader(new ByteArrayInputStream(bytes),"UTF-8")));
+                    new InputStreamReader(new ByteArrayInputStream(bytes,0,length),"UTF-8")));
             String type = document.getDocumentElement().getAttribute("name");
+
             if(type.equals("message")) {
                 message =  new ClientChatMessage(document.getElementsByTagName("message").item(0).getTextContent(),
                         Integer.valueOf(document.getElementsByTagName("session").item(0).getTextContent()));
@@ -169,7 +176,6 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMe
         try {
             builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
         } catch (ParserConfigurationException e) {
-            e.printStackTrace();
             return;
         }
         doc = builder.newDocument();
@@ -187,20 +193,5 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMe
         messagesWriter.writeInt(ba.size());
         messagesWriter.write(ba.toByteArray());
         getLogger().info("Writing message " + message.getClass().getSimpleName());
-    }
-
-    @Override
-    protected void endWriting() {
-        try {
-            super.endWriting();
-            messagesReader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    protected void endReading() {
-        super.endReading();
     }
 }

@@ -57,7 +57,7 @@ implements ClientMessagesProcessor {
 
     @Override
     protected void handleConnectionBreak() {
-        if(client.isOnline()) {
+        if(client != null && client.isOnline()) {
             logger.warn("Connection was broken");
             client.setOnline(false);
             synchronized (queuesLock) {

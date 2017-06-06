@@ -1,6 +1,10 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 
@@ -11,15 +15,32 @@ public class LoginDialog extends JDialog implements Observable {
     private JTextField loginField;
     private SimpleObserver terminate;
 
+    final private static String WINDOW_NAME = "Login";
+
     private ArrayList<Observer> observers = new ArrayList<>();
 
     LoginDialog(SimpleObserver terminate) {
         this.terminate = terminate;
         setContentPane(contentPane);
         setModal(false);
+        setTitle(WINDOW_NAME);
         getRootPane().setDefaultButton(buttonOK);
         pack();
         buttonOK.addActionListener((ActionEvent e) -> onOK());
+        loginField.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                getUsualColor();
+            }
+            public void removeUpdate(DocumentEvent e) {
+                getUsualColor();
+            }
+            public void insertUpdate(DocumentEvent e) {
+                getUsualColor();
+            }
+            void getUsualColor() {
+                setForeground(Color.BLACK);
+            }
+        });
         buttonCancel.addActionListener((ActionEvent e) -> onCancel());
 
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
@@ -43,6 +64,9 @@ public class LoginDialog extends JDialog implements Observable {
         dispose();
     }
 
+    void showError() {
+        loginField.setForeground(Color.RED);
+    }
 
     @Override
     public void notifyObservers() {

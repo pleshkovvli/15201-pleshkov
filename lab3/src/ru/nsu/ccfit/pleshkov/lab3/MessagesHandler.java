@@ -40,7 +40,7 @@ abstract class MessagesHandler<IN extends Message, OUT extends Message> {
     abstract protected void fin();
     abstract protected void close();
 
-    void begin(String readerName, String writerName) {
+    void begin(String readerName, String writerName, int timeout) {
         writer = new Thread(() -> {
             try {
                 while (!Thread.interrupted()) {
@@ -48,7 +48,6 @@ abstract class MessagesHandler<IN extends Message, OUT extends Message> {
                         writeMessage(getMessage());
                     } catch (SocketTimeoutException e) {
                         if (socket.isClosed()) {
-                            e.printStackTrace();
                             break;
                         }
                     }
@@ -69,7 +68,6 @@ abstract class MessagesHandler<IN extends Message, OUT extends Message> {
                         handleMessage(readMessage());
                     } catch (SocketTimeoutException e) {
                         if (socket.isClosed()) {
-                            e.printStackTrace();
                             break;
                         }
                     }
@@ -86,7 +84,7 @@ abstract class MessagesHandler<IN extends Message, OUT extends Message> {
         }, readerName);
         reader.start();
         try {
-            socket.setSoTimeout(1000);
+            socket.setSoTimeout(timeout);
         } catch (SocketException e) {
             e.printStackTrace();
         }
