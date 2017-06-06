@@ -39,7 +39,7 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMe
 
     @Override
     protected ClientMessage readMessage() throws IOException, FailedReadException {
-        super.readMessage();
+        ClientMessage message;
         try {
             DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
             int length = messagesReader.readInt();
@@ -52,26 +52,27 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMe
                     new InputStreamReader(new ByteArrayInputStream(bytes),"UTF-8")));
             String type = document.getDocumentElement().getAttribute("name");
             if(type.equals("message")) {
-                return new ClientChatMessage(document.getElementsByTagName("message").item(0).getTextContent(),
+                message =  new ClientChatMessage(document.getElementsByTagName("message").item(0).getTextContent(),
                         Integer.valueOf(document.getElementsByTagName("session").item(0).getTextContent()));
-            }
+            } else
             if(type.equals("list")) {
-                return new ClientListMessage(Integer.valueOf(document.getElementsByTagName("session").item(0).getTextContent()));
-            }
+                message =  new ClientListMessage(Integer.valueOf(document.getElementsByTagName("session").item(0).getTextContent()));
+            } else
             if(type.equals("login")) {
-                return new ClientLoginMessage(document.getElementsByTagName("name").item(0).getTextContent(),
+                message =  new ClientLoginMessage(document.getElementsByTagName("name").item(0).getTextContent(),
                         document.getElementsByTagName("type").item(0).getTextContent());
-            }
+            } else
             if(type.equals("logout")) {
-                return new ClientLogoutMessage(Integer.valueOf(document.getElementsByTagName("session").
+                message =  new ClientLogoutMessage(Integer.valueOf(document.getElementsByTagName("session").
                         item(0).getTextContent()));
+            } else {
+                throw new FailedReadException("Unknown type");
             }
-        } catch (ParserConfigurationException e) {
+        } catch (ParserConfigurationException | SAXException e) {
             throw new FailedReadException(e);
-        } catch (SAXException e) {
-            e.printStackTrace();
         }
-        return null;
+        getLogger().info("Reading message " + message.getClass().getSimpleName());
+        return message;
     }
 
     private Document doc;
@@ -164,7 +165,6 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMe
 
     @Override
     protected void writeMessage(ServerMessage message) throws IOException {
-        super.writeMessage(message);
         DocumentBuilder builder;
         try {
             builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
@@ -186,6 +186,7 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMe
         }
         messagesWriter.writeInt(ba.size());
         messagesWriter.write(ba.toByteArray());
+        getLogger().info("Writing message " + message.getClass().getSimpleName());
     }
 
     @Override

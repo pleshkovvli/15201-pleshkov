@@ -29,9 +29,10 @@ class ServerObjectMessagesHandler extends ServerMessagesHandler {
 
     @Override
     protected ClientMessage readMessage() throws IOException, FailedReadException {
-        super.readMessage();
         try {
-            return (ClientMessage) messagesReader.readObject();
+            ClientMessage message = (ClientMessage) messagesReader.readObject();
+            getLogger().info("Reading message " + message.getClass().getSimpleName());
+            return message;
         } catch (ClassNotFoundException e)  {
             throw new FailedReadException(e);
         }
@@ -39,8 +40,8 @@ class ServerObjectMessagesHandler extends ServerMessagesHandler {
 
     @Override
     protected void writeMessage(ServerMessage message) throws IOException {
-        super.writeMessage(message);
         messagesWriter.writeObject(message);
+        getLogger().info("Writing message " + message.getClass().getSimpleName());
     }
 
     @Override

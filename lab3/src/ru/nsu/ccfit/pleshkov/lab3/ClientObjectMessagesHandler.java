@@ -48,6 +48,5 @@ class ClientObjectMessagesHandler extends ClientMessagesHandler {
     @Override
     protected void writeMessage(ClientMessage message) throws IOException {
         messagesWriter.writeObject(message);
-
     }
 }

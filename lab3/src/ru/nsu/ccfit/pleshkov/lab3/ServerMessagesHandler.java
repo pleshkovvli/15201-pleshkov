@@ -24,6 +24,10 @@ implements ClientMessagesProcessor {
 
     final private static String LOG_FILE_NAME = "server.log";
 
+    static Logger getLogger() {
+        return logger;
+    }
+
     static private Logger logger;
 
     private ClientInfo client;
@@ -48,13 +52,13 @@ implements ClientMessagesProcessor {
 
     @Override
     protected void handleInterruption() {
-        logger.info("Connection broken");
+        logger.info("Thread was interrupted");
     }
 
     @Override
     protected void handleConnectionBreak() {
         if(client.isOnline()) {
-            logger.warn("Connection broken");
+            logger.warn("Connection was broken");
             client.setOnline(false);
             synchronized (queuesLock) {
                 queue.add(new ServerSuccessMessage());
@@ -67,15 +71,8 @@ implements ClientMessagesProcessor {
         }
     }
 
-    @Override
-    protected void writeMessage(ServerMessage message) throws IOException {
-        logger.info("Writing message to " + Thread.currentThread().getName());
-    }
-
-    @Override
-    protected ClientMessage readMessage() throws IOException, FailedReadException {
-        logger.info("Reading message from "  + Thread.currentThread().getName());
-        return null;
+    public BlockingQueue<ServerMessage> getQueue() {
+        return queue;
     }
 
     @Override
@@ -83,7 +80,7 @@ implements ClientMessagesProcessor {
         if(client != null) {
             client.setOnline(false);
         }
-        logger.info(Thread.currentThread().toString() + " finished reading");
+        logger.info("Finished reading");
     }
 
     @Override
@@ -91,18 +88,19 @@ implements ClientMessagesProcessor {
         if(client != null) {
             client.setOnline(false);
         }
-        logger.info(Thread.currentThread().toString() + " finished writing");
+        logger.info("Finished writing");
     }
 
     @Override
     protected void fin() {
-        logger.info("Started threads " + getWriter().toString() + ", " + getReader().toString());
+        logger.info("Finished initialization");
     }
 
     @Override
     protected ServerMessage getMessage() throws IOException, InterruptedException {
-        return queue.take();
-
+        ServerMessage message = queue.take();
+        logger.info("Got message " + message.getClass().getSimpleName());
+        return message;
     }
 
     @Override
@@ -111,6 +109,7 @@ implements ClientMessagesProcessor {
             client = clients.get(message.getSessionID());
             if(client == null) {
                 ServerErrorMessage errorMessage = new ServerErrorMessage("You haven't logged in yet");
+                logger.warn("Message without login error");
                 queue.add(errorMessage);
                 return;
             }
@@ -133,18 +132,21 @@ implements ClientMessagesProcessor {
                 }
             }
         }
+        logger.info("Handled with chat message from " + client.getName());
     }
 
     @Override
     public void process(ClientLoginMessage message) {
         if(client != null) {
             queue.add(new ServerErrorMessage("Already logged in"));
+            logger.warn("Double login error");
             return;
         }
         String name = message.getUserName();
         for(ClientInfo client : clients.values()) {
             if((client != this.client) && (client.getName().equals(name))) {
                 queue.add(new ServerErrorMessage("Name already had been taken"));
+                logger.warn("Same login name error " + client.getName());
                 return;
             }
         }
@@ -160,7 +162,7 @@ implements ClientMessagesProcessor {
                 }
             }
         }
-
+        logger.info("Handled with login message " + message.getUserName() + " via " + message.getClientName());
     }
 
     @Override
@@ -172,10 +174,12 @@ implements ClientMessagesProcessor {
                 clients.remove(message.getSessionID());
             } else {
                 queue.add(new ServerErrorMessage("Wrong sessionID"));
+                logger.warn("Logout request with wrong id=" + String.valueOf(message.getSessionID()));
                 return;
             }
         } else {
             queue.add(new ServerErrorMessage("You haven't logged in yet"));
+            logger.warn("Logout request without login");
             return;
         }
         synchronized (queuesLock) {
@@ -186,6 +190,7 @@ implements ClientMessagesProcessor {
                 }
             }
         }
+        logger.info("Handled with logout message from " + name);
     }
 
     @Override
@@ -197,6 +202,7 @@ implements ClientMessagesProcessor {
             }
         }
         queue.add(new ServerSuccessListMessage(listusers));
+        logger.info("Got list message from " + client.getName());
     }
 
     protected void handleMessage(ClientMessage message) throws IOException {
