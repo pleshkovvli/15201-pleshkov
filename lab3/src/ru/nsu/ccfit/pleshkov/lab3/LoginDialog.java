@@ -1,7 +1,6 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;

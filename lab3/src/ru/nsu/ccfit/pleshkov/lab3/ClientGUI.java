@@ -6,10 +6,7 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -19,7 +16,7 @@ import java.util.concurrent.BlockingQueue;
 
 public class ClientGUI extends JFrame implements ClientInterface {
     private JPanel Panel;
-    private JTextField currentMessage;
+    private JTextArea currentMessage;
     private JButton logoutButton;
     private JTextPane previousMessages;
     private JTextPane userlist;
@@ -37,12 +34,15 @@ public class ClientGUI extends JFrame implements ClientInterface {
     private boolean listed = false;
     final private Object loggedOutLock = new Object();
 
+    static final private String WINDOW_NAME = "Chat";
+
     private BlockingQueue<String> sendedMessages = new ArrayBlockingQueue<>(10);
 
     ClientGUI() {
         setContentPane(Panel);
         setBounds(400, 200, 600, 500);
         logoutButton.setText("Logout");
+        setTitle(WINDOW_NAME);
         messageForm = new MessageForm(currentMessage);
         logoutClick = new LogoutButton(logoutButton);
         messages = new Messages(previousMessages);
@@ -153,6 +153,20 @@ public class ClientGUI extends JFrame implements ClientInterface {
         private LinkedList<User> list = new LinkedList<>();
 
         Userlist(JTextPane users) {
+            users.addFocusListener(new FocusListener() {
+
+                @Override
+                public void focusLost(FocusEvent e) {
+                    users.setEditable(true);
+
+                }
+
+                @Override
+                public void focusGained(FocusEvent e) {
+                    users.setEditable(false);
+
+                }
+            });
             this.users = users;
             document = users.getStyledDocument();
         }
@@ -230,6 +244,20 @@ public class ClientGUI extends JFrame implements ClientInterface {
         private LimitedQueue<String> messagesQueue = new LimitedQueue<>(10);
 
         Messages(JTextPane messages) {
+            messages.addFocusListener(new FocusListener() {
+
+                @Override
+                public void focusLost(FocusEvent e) {
+                    messages.setEditable(true);
+
+                }
+
+                @Override
+                public void focusGained(FocusEvent e) {
+                    messages.setEditable(false);
+
+                }
+            });
             document = messages.getStyledDocument();
             StyleConstants.setForeground(errorAttributes,Color.RED);
         }
@@ -334,11 +362,13 @@ public class ClientGUI extends JFrame implements ClientInterface {
     }
 
     private class MessageForm implements Observable {
-        MessageForm(JTextField form) {
+        MessageForm(JTextArea form) {
             this.form = form;
-            addAction((ActionEvent e) -> {
+            form.setLineWrap(true);
+            form.setWrapStyleWord(true);
+            addAction(() -> {
                 currentText = form.getText();
-                sendedMessages.add(currentText);
+                sendedMessages.add("~: " + currentText);
                 messageForm.form.setText("");
                 messageForm.notifyObservers();
             });
@@ -346,12 +376,33 @@ public class ClientGUI extends JFrame implements ClientInterface {
 
         private ArrayList<Observer> observers = new ArrayList<>();
 
-        private JTextField form;
+        private JTextArea form;
 
         private String currentText;
+        final static private String NEWLINE = "NEWLINE";
+        final static private String NEWMESSAGE = "NEWMESSAGE";
 
-        void addAction(ActionListener listener) {
-            form.addActionListener(listener);
+
+        private void addAction(SimpleObserver listener) {
+            InputMap input = form.getInputMap();
+            KeyStroke enter = KeyStroke.getKeyStroke("ENTER");
+            KeyStroke shiftEnter = KeyStroke.getKeyStroke("ctrl ENTER");
+            input.put(shiftEnter, NEWLINE);
+            input.put(enter, NEWMESSAGE);
+
+            ActionMap actions = form.getActionMap();
+            actions.put(NEWMESSAGE, new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    listener.update();
+                }
+            });
+            actions.put(NEWLINE, new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    form.append("\n");
+                }
+            });
         }
 
         @Override
