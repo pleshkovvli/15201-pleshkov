@@ -7,35 +7,35 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 abstract class ClientMessagesHandler extends MessagesHandler<ServerMessage, ClientMessage>
-implements MessageObservable{
-    private ArrayList<MessageObserver> observers = new ArrayList<>();
+implements MessageObservable<ServerMessage> {
+
+    private ArrayList<MessageObserver<ServerMessage>> observers = new ArrayList<>();
 
     final private String clientName;
 
     @Override
-    public void notifyMessageObservers(Message message) {
-        for(MessageObserver observer : observers) {
+    public void notifyMessageObservers(ServerMessage message) {
+        for(MessageObserver<ServerMessage> observer : observers) {
             observer.update(message);
         }
     }
 
+    final private Client client;
+
     @Override
-    public void removeMessageObserver(MessageObserver observer) {
+    public void removeMessageObserver(MessageObserver<ServerMessage> observer) {
         observers.remove(observer);
     }
 
     @Override
-    public void addMessageObserver(MessageObserver observer) {
+    public void addMessageObserver(MessageObserver<ServerMessage> observer) {
         observers.add(observer);
     }
 
-    ClientMessagesHandler(Socket socket, String clientName) throws IOException {
+    ClientMessagesHandler(Socket socket, String clientName, Client client) throws IOException {
         super(socket);
         this.clientName = clientName;
-    }
-
-    int getSessionID() {
-        return sessionID;
+        this.client = client;
     }
 
     void setSessionID(int sessionID) {
@@ -62,14 +62,35 @@ implements MessageObservable{
         queue.add(new ClientListMessage(sessionID));
     }
 
+    @Override
+    protected void handleConnectionBreak() {
+
+    }
+
+    void waitEnd() {
+        try {
+            getReader().join();
+        } catch (InterruptedException e) {
+
+        }
+        try {
+            getWriter().join();
+        } catch (InterruptedException e) {
+
+        }
+        close();
+    }
+
+    @Override
+    protected void handleInterruption() {
+
+    }
 
     @Override
     protected void fin() {
-        try {
-            getReader().join();
-            getWriter().join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        synchronized (client.getLock()) {
+            client.setUnsetHandler(false);
+            client.getLock().notifyAll();
         }
     }
 

@@ -5,7 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-public class ServerObjectMessagesHandler extends ServerMessagesHandler {
+class ServerObjectMessagesHandler extends ServerMessagesHandler {
 
     private ObjectInputStream messagesReader;
     private ObjectOutputStream messagesWriter;
@@ -18,7 +18,18 @@ public class ServerObjectMessagesHandler extends ServerMessagesHandler {
     }
 
     @Override
+    protected void close() {
+        try {
+            messagesWriter.close();
+            messagesReader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
     protected ClientMessage readMessage() throws IOException, FailedReadException {
+        super.readMessage();
         try {
             return (ClientMessage) messagesReader.readObject();
         } catch (ClassNotFoundException e)  {
@@ -28,29 +39,17 @@ public class ServerObjectMessagesHandler extends ServerMessagesHandler {
 
     @Override
     protected void writeMessage(ServerMessage message) throws IOException {
+        super.writeMessage(message);
         messagesWriter.writeObject(message);
     }
 
     @Override
     protected void endWriting() {
-        try {
-            super.endWriting();
-            messagesReader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        super.endWriting();
     }
 
     @Override
     protected void endReading() {
-        try {
-            super.endReading();
-            messagesWriter.close();
-            if(!getSocket().isClosed()) {
-                getSocket().close();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        super.endReading();
     }
 }

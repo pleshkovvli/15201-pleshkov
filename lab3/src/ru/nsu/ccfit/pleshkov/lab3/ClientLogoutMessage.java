@@ -1,7 +1,7 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
 class ClientLogoutMessage implements ClientMessage {
-    public int getSessionID() {
+    int getSessionID() {
         return sessionID;
     }
 

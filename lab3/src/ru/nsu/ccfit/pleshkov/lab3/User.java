@@ -1,6 +1,8 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
-class User {
+import java.io.Serializable;
+
+class User implements Serializable {
     final private String name;
 
     public String getName() {

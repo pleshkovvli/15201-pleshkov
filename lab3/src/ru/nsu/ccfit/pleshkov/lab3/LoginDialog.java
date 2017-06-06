@@ -9,27 +9,18 @@ public class LoginDialog extends JDialog implements Observable {
     private JButton buttonOK;
     private JButton buttonCancel;
     private JTextField loginField;
-    private ClientGUI gui;
+    private SimpleObserver terminate;
 
-    ArrayList<Observer> observers = new ArrayList<>();
+    private ArrayList<Observer> observers = new ArrayList<>();
 
-    LoginDialog(ClientGUI gui) {
+    LoginDialog(SimpleObserver terminate) {
+        this.terminate = terminate;
         setContentPane(contentPane);
         setModal(false);
         getRootPane().setDefaultButton(buttonOK);
         pack();
-        this.gui = gui;
-        buttonOK.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                onOK();
-            }
-        });
-
-        buttonCancel.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                onCancel();
-            }
-        });
+        buttonOK.addActionListener((ActionEvent e) -> onOK());
+        buttonCancel.addActionListener((ActionEvent e) -> onCancel());
 
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
@@ -38,11 +29,8 @@ public class LoginDialog extends JDialog implements Observable {
             }
         });
 
-        contentPane.registerKeyboardAction(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                onCancel();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        contentPane.registerKeyboardAction((ActionEvent e) -> onCancel(),
+                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         setVisible(true);
     }
 
@@ -51,6 +39,7 @@ public class LoginDialog extends JDialog implements Observable {
     }
 
     private void onCancel() {
+        terminate.update();
         dispose();
     }
 

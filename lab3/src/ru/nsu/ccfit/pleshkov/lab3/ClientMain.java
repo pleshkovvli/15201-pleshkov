@@ -1,35 +1,60 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.Socket;
 
 public class ClientMain {
-    final static private String CLIENT_NAME = "pleshkov.client";
+    final static private String XML_CLIENT_NAME = "pleshkov.xml-client";
+    final static private String OBJECTS_CLIENT_NAME = "pleshkov.objects-client";
 
-    public static void main(String[] args) throws InterruptedException {
+    static private boolean loop = true;
+
+    public static void main(String[] args) {
+        if(args.length == 0) {
+            System.out.println("Usage: java -jar Client.jar /path/config.txt");
+        }
+        final Config config;
         try {
-            Client client = new Client();
-            client.setGui(new ClientGUI());
-            while(true) {
-                Socket socket = new Socket(InetAddress.getLocalHost(),Server.PORT);
-                client.setHandler(new ClientXMLMessagesHandler(socket, CLIENT_NAME));
-                client.getHandler().addMessageObserver(new MessageObserver<ServerMessage>() {
-                    @Override
-                    public void update(ServerMessage message) {
-                        message.process(client);
-                    }
-                });
-                client.getGui().init(
-                        client.getHandler()::addLoginMessage,
-                        client.getHandler()::addChatMessage,
-                        client.getHandler()::addLogoutMessage,
-                        client.getHandler()::addListMessage);
-                client.getHandler().begin("Writer", "Reader");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(0);
+            config = ConfigParser.parse(args[0]);
+        } catch (BadParsingException e) {
+            System.err.println(e.getMessage());
+            return;
+        }
+        Client client = new Client();
+        client.setGui(new ClientGUI());
+        Thread myThread = Thread.currentThread();
+        while(loop) {
+            client.getGui().init(
+                    (String name) -> {
+                        try {
+                            Socket socket = new Socket(config.getAddress(),config.getPort());
+                            if(config.getType().equals("xml")) {
+                                client.setHandler(new ClientXMLMessagesHandler(socket, XML_CLIENT_NAME,client));
+                            } else {
+                                client.setHandler(new ClientObjectMessagesHandler(socket,OBJECTS_CLIENT_NAME,client));
+                            }
+                            client.getHandler().addMessageObserver(new MessageObserver<ServerMessage>() {
+                                @Override
+                                public void update(ServerMessage message) {
+                                    message.process(client);
+                                }
+                            });
+                            client.addLoginMessage(name);
+                            client.getHandler().begin("Writer", "Reader");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            loop = false;
+                        }
+                    },
+                    client::addChatMessage,
+                    client::addLogoutMessage,
+                    client::addListMessage,
+                    client::endIt,
+                    () -> {
+                        loop = false;
+                        myThread.interrupt();
+                    });
+            client.waitEnd();
         }
     }
 }

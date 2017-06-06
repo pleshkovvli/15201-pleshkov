@@ -7,8 +7,8 @@ import java.net.Socket;
 
 class ClientObjectMessagesHandler extends ClientMessagesHandler {
 
-    ClientObjectMessagesHandler(Socket socket, String clientName) throws IOException {
-        super(socket,clientName);
+    ClientObjectMessagesHandler(Socket socket, String clientName, Client client) throws IOException {
+        super(socket,clientName,client);
         messagesReader = new ObjectInputStream(socket.getInputStream());
         messagesWriter = new ObjectOutputStream(socket.getOutputStream());
     }
@@ -18,23 +18,19 @@ class ClientObjectMessagesHandler extends ClientMessagesHandler {
 
     @Override
     protected void endWriting() {
-        try {
-            messagesWriter.close();
-            if(!getSocket().isClosed()) {
-                getSocket().close();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
     }
 
     @Override
     protected void endReading() {
+
+    }
+
+    @Override
+    protected void close() {
         try {
+            messagesWriter.close();
             messagesReader.close();
-            if(!getSocket().isClosed()) {
-                getSocket().close();
-            }
         } catch (IOException e) {
             e.printStackTrace();
         }

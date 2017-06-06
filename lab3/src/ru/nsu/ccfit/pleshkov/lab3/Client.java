@@ -4,6 +4,18 @@ import java.util.ArrayList;
 
 class Client implements ServerMessagesProcessor {
 
+    void setUnsetHandler(boolean unsetHandler) {
+        this.unsetHandler = unsetHandler;
+    }
+
+    private boolean unsetHandler = true;
+
+    Object getLock() {
+        return lock;
+    }
+
+    final private Object lock = new Object();
+
     ClientGUI getGui() {
         return gui;
     }
@@ -24,14 +36,49 @@ class Client implements ServerMessagesProcessor {
 
     private ClientMessagesHandler handler;
 
+
+    void addChatMessage(String message)  {
+        handler.addChatMessage(message);
+    }
+
+    void addLoginMessage(String name)  {
+        handler.addLoginMessage(name);
+    }
+
+    void addLogoutMessage()  {
+        handler.addLogoutMessage();
+    }
+
+    void addListMessage() {
+        handler.addListMessage();
+    }
+
+    void endIt() {
+        handler.endIt();
+    }
+
+    void waitEnd() {
+        synchronized (lock) {
+            try {
+                while (unsetHandler) {
+                    lock.wait();
+                }
+            } catch (InterruptedException e) {
+                return;
+            }
+        }
+        handler.waitEnd();
+        unsetHandler = true;
+    }
+
     @Override
     public void process(ServerChatMessage message) {
-        gui.getMessage(message.getMessage(),message.getName());
+        gui.showMessage(message.getMessage(),message.getName());
     }
 
     @Override
     public void process(ServerSuccessMessage message) {
-
+        gui.showSuccess();
     }
 
     @Override
@@ -44,7 +91,7 @@ class Client implements ServerMessagesProcessor {
             builder.append(user.getType());
             builder.append("\n");
         }
-        gui.getList(builder.toString());
+        gui.showList(builder.toString());
     }
 
     @Override
@@ -55,17 +102,17 @@ class Client implements ServerMessagesProcessor {
 
     @Override
     public void process(ServerUserloginMessage message) {
-        gui.getUserlogin(message.getName(),message.getType());
+        gui.showUserlogin(message.getName(),message.getType());
     }
 
     @Override
     public void process(ServerUserlogoutMessage message) {
-        gui.getUserlogout(message.getName());
+        gui.showUserlogout(message.getName());
     }
 
     @Override
     public void process(ServerErrorMessage errorMessage) {
-        gui.getError(errorMessage.getReason());
+        gui.showError(errorMessage.getReason());
     }
 
 }

@@ -8,11 +8,15 @@ import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Semaphore;
 
 public class ClientGUI extends JFrame implements ClientInterface {
     private JPanel Panel;
@@ -27,6 +31,10 @@ public class ClientGUI extends JFrame implements ClientInterface {
     private LoginDialog dialog;
     private Userlist list;
     private SimpleObserver listObserver;
+    private SimpleObserver fin;
+    private Semaphore semaphore;
+
+    private BlockingQueue<String> sendedMessages = new ArrayBlockingQueue<>(10);
 
     ClientGUI() {
         setContentPane(Panel);
@@ -37,29 +45,39 @@ public class ClientGUI extends JFrame implements ClientInterface {
         logoutClick = new LogoutButton(logoutButton);
         messages = new Messages(previousMessages);
         list = new Userlist(userlist);
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                logoutClick.notifySimpleObservers();
+            }
+        });
     }
 
     void init(Observer loginObserver, Observer messagesObserver,
-              SimpleObserver logoutObserver, SimpleObserver listObserver) {
+              SimpleObserver logoutObserver, SimpleObserver listObserver,
+              SimpleObserver fin, SimpleObserver terminate) {
+        this.fin = fin;
         messageForm.clearObservers();
-        messageForm.addObserver(messagesObserver);
-        dialog = new LoginDialog(ClientGUI.this);
-        dialog.addObserver(loginObserver);
+        messageForm.addObserver((String message) -> SwingUtilities.invokeLater(() -> messagesObserver.update(message)));
+        dialog = new LoginDialog(() -> {
+            terminate.update();
+            this.dispose();
+        });
+        dialog.addObserver((String message) -> SwingUtilities.invokeLater(() -> {
+            loginObserver.update(message);
+            loginText.setText(message);
+        }));
         logoutClick.clearObservers();
+        //logoutClick.addSimpleObserver(() -> SwingUtilities.invokeLater(logoutObserver::update));
         logoutClick.addSimpleObserver(logoutObserver);
         this.listObserver = listObserver;
     }
 
     void startMessages() {
+        semaphore = new Semaphore(0);
         dialog.dispose();
         listObserver.update();
         this.setVisible(true);
-        messageForm.addAction((ActionEvent e) -> {
-            messageForm.currentText = messageForm.form.getText();
-            messages.updateText(messageForm.currentText);
-            messageForm.form.setText("");
-            messageForm.notifyObservers();
-        });
     }
 
     private class LogoutButton extends ClickButton {
@@ -70,8 +88,15 @@ public class ClientGUI extends JFrame implements ClientInterface {
         @Override
         public void notifySimpleObservers() {
             super.notifySimpleObservers();
+            try {
+                semaphore.acquire();
+                //semaphore.tryAcquire(1000, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             list.clear();
             ClientGUI.this.setVisible(false);
+            fin.update();
         }
 
         void clearObservers() {
@@ -87,11 +112,8 @@ public class ClientGUI extends JFrame implements ClientInterface {
         ArrayList<SimpleObserver> observers = new ArrayList<>();
 
         ClickButton(JButton button) {
-            this.button = button;
             button.addActionListener((ActionEvent e) -> notifySimpleObservers());
         }
-
-        private JButton button;
 
         @Override
         public void notifySimpleObservers() {
@@ -126,7 +148,7 @@ public class ClientGUI extends JFrame implements ClientInterface {
 
         void getUser(String user, String type) {
             try {
-                String text = user + " via " + type +"\n"  ;
+                String text = user + " via " + type + "\n";
                 list.add(new User(user,type));
                 document.insertString(document.getLength(),text,userAttributes);
             } catch (BadLocationException e) {
@@ -161,13 +183,13 @@ public class ClientGUI extends JFrame implements ClientInterface {
             }
         }
 
-        void removeUser(String mes) {
+        void removeUser(String removingUser) {
             try {
                 int length = 0;
                 Iterator<User> iterator = list.listIterator(0);
                 User user = iterator.next();
                 String userName = user.getName();
-                if(mes.equals(userName)) {
+                if(removingUser.equals(userName)) {
                     document.remove(length, userName.length() + user.getType().length() + 6);
                     iterator.remove();
                     return;
@@ -176,7 +198,7 @@ public class ClientGUI extends JFrame implements ClientInterface {
                     length += userName.length() + user.getType().length() + 6;
                     user = iterator.next();
                     userName = user.getName();
-                    if(mes.equals(userName)) {
+                    if(removingUser.equals(userName)) {
                         document.remove(length, userName.length() + user.getType().length() + 6);
                         iterator.remove();
                         break;
@@ -190,16 +212,13 @@ public class ClientGUI extends JFrame implements ClientInterface {
     }
 
     private class Messages {
-        private JTextPane messages;
         private StyledDocument document;
         private SimpleAttributeSet messageAttributes = new SimpleAttributeSet();
         private SimpleAttributeSet errorAttributes = new SimpleAttributeSet();
 
-
         private LimitedQueue<String> messagesQueue = new LimitedQueue<>(10);
 
         Messages(JTextPane messages) {
-            this.messages = messages;
             document = messages.getStyledDocument();
             StyleConstants.setForeground(errorAttributes,Color.RED);
         }
@@ -240,84 +259,89 @@ public class ClientGUI extends JFrame implements ClientInterface {
     }
 
     @Override
-    public void getMessage(String message, String sender)  {
+    public void showSuccess() {
+        if(sendedMessages.size() > 0) {
+            try {
+                messages.updateText(sendedMessages.take());
+            }  catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        } else {
+            semaphore.release();
+        }
+    }
+
+    @Override
+    public void showMessage(String message, String sender)  {
         messages.updateText(sender + ": " + message);
     }
+
     @Override
-    public void getError(String error) {
+    public void showError(String error) {
         messages.errorText(error);
     }
+
     @Override
-    public void getList(String listString) {
+    public void showList(String listString) {
         list.getList(listString);
     }
 
     @Override
-    public void getUserlogin(String user, String type) {
+    public void showUserlogin(String user, String type) {
         list.getUser(user,type);
     }
 
     @Override
-    public void getUserlogout(String user) {
+    public void showUserlogout(String user) {
         list.removeUser(user);
     }
 
     private class MessageForm implements Observable {
         MessageForm(JTextField form) {
             this.form = form;
+            addAction((ActionEvent e) -> {
+                currentText = form.getText();
+                sendedMessages.add(currentText);
+                //messages.updateText(messageForm.currentText);
+                messageForm.form.setText("");
+                messageForm.notifyObservers();
+            });
         }
 
         private ArrayList<Observer> observers = new ArrayList<>();
 
-        private final Object lock = new Object();
-
         private JTextField form;
 
         private String currentText;
-        private ArrayList<ActionListener> listeners = new ArrayList<>();
 
         void addAction(ActionListener listener) {
-            listeners.add(listener);
             form.addActionListener(listener);
         }
 
         @Override
         public void removeObserver(Observer observer) {
-            synchronized (lock) {
-                if(observers.contains(observer)) {
-                    observers.remove(observer);
-                }
+            if(observers.contains(observer)) {
+                observers.remove(observer);
             }
         }
 
         @Override
         public void addObserver(Observer observer) {
-            synchronized (lock) {
-                observers.add(observer);
-            }
+            observers.add(observer);
         }
 
         @Override
         public void notifyObservers() {
-            synchronized (lock) {
-                for(Observer observer : observers) {
-                    observer.update(currentText);
-                }
+            for(Observer observer : observers) {
+                observer.update(currentText);
             }
         }
 
         void clearObservers() {
-            synchronized (lock) {
-                Iterator<Observer> iterator = observers.listIterator(0);
-                while (iterator.hasNext()) {
-                    iterator.next();
-                    iterator.remove();
-                }
-                Iterator<ActionListener> listenerIterator = listeners.listIterator(0);
-                while (listenerIterator.hasNext()) {
-                    form.removeActionListener(listenerIterator.next());
-                    listenerIterator.remove();
-                }
+            Iterator<Observer> iterator = observers.listIterator(0);
+            while (iterator.hasNext()) {
+                iterator.next();
+                iterator.remove();
             }
         }
     }

@@ -14,9 +14,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.*;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMessagesProcessor {
@@ -28,11 +25,21 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMe
         messagesWriter = new DataOutputStream(socket.getOutputStream());
         messagesWriter.flush();
         messagesReader = new DataInputStream(socket.getInputStream());
-        //BufferedReader r = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+    }
+
+    @Override
+    protected void close() {
+        try {
+            messagesWriter.close();
+            messagesReader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     protected ClientMessage readMessage() throws IOException, FailedReadException {
+        super.readMessage();
         try {
             DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
             int length = messagesReader.readInt();
@@ -41,7 +48,6 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMe
             while (read < length) {
                 read += messagesReader.read(bytes,read,length - read);
             }
-            System.out.println(new String(bytes, StandardCharsets.UTF_8));
             Document document = builder.parse(new InputSource(
                     new InputStreamReader(new ByteArrayInputStream(bytes),"UTF-8")));
             String type = document.getDocumentElement().getAttribute("name");
@@ -104,6 +110,9 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMe
         Element sender = doc.createElement("name");
         sender.setTextContent(message.getName());
         event.appendChild(sender);
+        Element type = doc.createElement("type");
+        type.setTextContent(message.getType());
+        event.appendChild(type);
     }
 
     @Override
@@ -155,6 +164,7 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMe
 
     @Override
     protected void writeMessage(ServerMessage message) throws IOException {
+        super.writeMessage(message);
         DocumentBuilder builder;
         try {
             builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
@@ -190,14 +200,6 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMe
 
     @Override
     protected void endReading() {
-        try {
-            super.endReading();
-            messagesWriter.close();
-            if(!getSocket().isClosed()) {
-                getSocket().close();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        super.endReading();
     }
 }

@@ -12,7 +12,7 @@ class ClientChatMessage implements ClientMessage {
         return message;
     }
 
-    public int getSessionID() {
+    int getSessionID() {
         return sessionID;
     }
 

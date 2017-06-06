@@ -15,8 +15,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.*;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 
 class ClientXMLMessagesHandler extends ClientMessagesHandler implements ClientMessagesProcessor  {
@@ -24,8 +22,8 @@ class ClientXMLMessagesHandler extends ClientMessagesHandler implements ClientMe
     private DataInputStream messagesReader;
     private DataOutputStream messagesWriter;
 
-    ClientXMLMessagesHandler(Socket socket, String clientName) throws IOException {
-        super(socket,clientName);
+    ClientXMLMessagesHandler(Socket socket, String clientName, Client client) throws IOException {
+        super(socket,clientName,client);
         messagesWriter = new DataOutputStream(socket.getOutputStream());
         messagesWriter.flush();
         messagesReader = new DataInputStream(socket.getInputStream());
@@ -39,11 +37,14 @@ class ClientXMLMessagesHandler extends ClientMessagesHandler implements ClientMe
 
     @Override
     protected void endReading() {
+
+    }
+
+    @Override
+    protected void close() {
         try {
+            messagesWriter.close();
             messagesReader.close();
-            if(!getSocket().isClosed()) {
-                getSocket().close();
-            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -59,7 +60,6 @@ class ClientXMLMessagesHandler extends ClientMessagesHandler implements ClientMe
             while (read < length) {
                 read += messagesReader.read(bytes,read,length - read);
             }
-            //System.out.println(new String(bytes));
             Document document = builder.parse(new InputSource(
                     new InputStreamReader(new ByteArrayInputStream(bytes),"UTF-8")));
             String type = document.getDocumentElement().getTagName();
@@ -111,7 +111,7 @@ class ClientXMLMessagesHandler extends ClientMessagesHandler implements ClientMe
         throw new FailedReadException();
     }
 
-    Document doc;
+    private Document doc;
 
     @Override
     public void process(ClientChatMessage message) {

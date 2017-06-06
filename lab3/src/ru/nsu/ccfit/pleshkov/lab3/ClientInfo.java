@@ -10,16 +10,7 @@ class ClientInfo {
     private String type;
     private ServerMessagesHandler handler;
 
-    public int getSessionID() {
-        return sessionID;
-    }
-
-    private int sessionID;
     private boolean isOnline;
-
-    void setSessionID(int sessionID) {
-        this.sessionID = sessionID;
-    }
 
     boolean isOnline() {
         return isOnline;

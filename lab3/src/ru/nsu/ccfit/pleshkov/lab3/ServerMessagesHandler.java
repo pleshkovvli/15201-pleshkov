@@ -23,13 +23,12 @@ implements ClientMessagesProcessor {
     static private Map<Integer,ClientInfo> clients = new TreeMap<>();
 
     final private static String LOG_FILE_NAME = "server.log";
-    public static Logger getLogger() {
-        return logger;
-    }
 
     static private Logger logger;
 
     private ClientInfo client;
+
+    final private Object queuesLock = new Object();
 
     static {
         PropertyConfigurator.configure("log4j.properties");
@@ -40,11 +39,43 @@ implements ClientMessagesProcessor {
                 e.printStackTrace();
             }
         }
-        logger = Logger.getLogger("ServerLogger");
+        logger = Logger.getLogger(Server.LOGGER_NAME);
     }
 
     ServerMessagesHandler(Socket socket) {
         super(socket);
+    }
+
+    @Override
+    protected void handleInterruption() {
+        logger.info("Connection broken");
+    }
+
+    @Override
+    protected void handleConnectionBreak() {
+        if(client.isOnline()) {
+            logger.warn("Connection broken");
+            client.setOnline(false);
+            synchronized (queuesLock) {
+                queue.add(new ServerSuccessMessage());
+                for(ClientInfo client : clients.values()) {
+                    if((client.getHandler() != this) && client.isOnline()) {
+                        client.getHandler().queue.add(new ServerUserlogoutMessage(this.client.getName()));
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    protected void writeMessage(ServerMessage message) throws IOException {
+        logger.info("Writing message to " + Thread.currentThread().getName());
+    }
+
+    @Override
+    protected ClientMessage readMessage() throws IOException, FailedReadException {
+        logger.info("Reading message from "  + Thread.currentThread().getName());
+        return null;
     }
 
     @Override
@@ -83,12 +114,23 @@ implements ClientMessagesProcessor {
                 queue.add(errorMessage);
                 return;
             }
+            synchronized (queuesLock) {
+                ServerUserloginMessage response = new ServerUserloginMessage(client.getName(),client.getType());
+                for(ClientInfo client : clients.values()) {
+                    if((client.getHandler() != this) && client.isOnline()) {
+                        client.getHandler().queue.add(response);
+                    }
+                }
+            }
             client.setOnline(true);
         }
-        ServerChatMessage response = new ServerChatMessage(message.getMessage(),client.getName());
-        for(ClientInfo client : clients.values()) {
-            if((client.getHandler() != this) && client.isOnline()) {
-                client.getHandler().queue.add(response);
+        synchronized (queuesLock) {
+            queue.add(new ServerSuccessMessage());
+            ServerChatMessage response = new ServerChatMessage(message.getMessage(),client.getName());
+            for(ClientInfo client : clients.values()) {
+                if((client.getHandler() != this) && client.isOnline()) {
+                    client.getHandler().queue.add(response);
+                }
             }
         }
     }
@@ -108,15 +150,17 @@ implements ClientMessagesProcessor {
         }
         client = new ClientInfo(name,message.getClientName(),this);
         int id = sessionID.getAndIncrement();
-        client.setSessionID(id);
         client.setOnline(true);
         clients.put(id,client);
-        queue.add(new ServerSuccessLoginMessage(id));
-        for(ClientInfo client : clients.values()) {
-            if((client.getHandler() != this) && client.isOnline()) {
-                client.getHandler().queue.add(new ServerUserloginMessage(message.getUserName(),message.getClientName()));
+        synchronized (queuesLock) {
+            queue.add(new ServerSuccessLoginMessage(id));
+            for(ClientInfo client : clients.values()) {
+                if((client.getHandler() != this) && client.isOnline()) {
+                    client.getHandler().queue.add(new ServerUserloginMessage(message.getUserName(),message.getClientName()));
+                }
             }
         }
+
     }
 
     @Override
@@ -134,13 +178,14 @@ implements ClientMessagesProcessor {
             queue.add(new ServerErrorMessage("You haven't logged in yet"));
             return;
         }
-        queue.add(new ServerSuccessMessage());
-        for(ClientInfo client : clients.values()) {
-            if((client.getHandler() != this) && client.isOnline()) {
-                client.getHandler().queue.add(new ServerUserlogoutMessage(name));
+        synchronized (queuesLock) {
+            queue.add(new ServerSuccessMessage());
+            for(ClientInfo client : clients.values()) {
+                if((client.getHandler() != this) && client.isOnline()) {
+                    client.getHandler().queue.add(new ServerUserlogoutMessage(name));
+                }
             }
         }
-        endIt();
     }
 
     @Override

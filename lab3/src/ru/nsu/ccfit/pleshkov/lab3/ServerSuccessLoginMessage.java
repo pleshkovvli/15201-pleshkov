@@ -1,7 +1,7 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
 class ServerSuccessLoginMessage implements ServerMessage {
-    public int getSessionID() {
+    int getSessionID() {
         return sessionID;
     }
 
