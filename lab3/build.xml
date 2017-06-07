@@ -1,0 +1,66 @@
+<project default="do">
+
+    <presetdef name="javac">
+        <javac includeantruntime="false" />
+    </presetdef>
+
+    <property name="build.dir" value="build"/>
+    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="tests.dir" value="${build.dir}/tests"/>
+    <property name="junit.dir" value="junit"/>
+    <property name="lib.dir" value="libs"/>
+    <property name="src.dir" value="src"/>
+    <property name="srctest.dir" value="test"/>
+
+    <path id="classpath">
+        <fileset dir="${lib.dir}" includes="log4j-1.2.17.jar"/>
+        <fileset dir="${lib.dir}" includes="javac2-7.0.3.jar"/>
+    </path>
+
+    <path id="classpath.test">
+        <fileset dir="${lib.dir}" includes="log4j-1.2.17.jar"/>
+        <fileset dir="${lib.dir}" includes="javac2-7.0.3.jar"/>
+        <pathelement location="${junit.dir}/junit-4.12.jar"/>
+        <pathelement location="${junit.dir}/hamcrest-core-1.3.jar"/>
+        <pathelement location="${classes.dir}"/>
+    </path>
+
+    <target name="do">
+        <delete dir="${build.dir}"/>
+        <delete file="Client.jar"/>
+        <delete file="Server.jar"/>
+        <mkdir dir="${classes.dir}"/>
+        <mkdir dir="${tests.dir}"/>
+        <javac fork="true" srcdir="${src.dir}" classpathref="classpath" includeantruntime="false" destdir="${classes.dir}">
+            <compilerarg line="" />
+        </javac>
+        <javac srcdir="${srctest.dir}" classpathref="classpath.test" destdir="${tests.dir}"/>
+        <jar destfile="Client.jar" basedir="${classes.dir}">
+            <zipgroupfileset dir="${lib.dir}" includes="*.jar" />
+            <manifest>
+                <attribute name="Main-Class" value="ru.nsu.ccfit.pleshkov.lab3.client.ClientMain"/>
+            </manifest>
+        </jar>
+        <jar destfile="Server.jar" basedir="${classes.dir}">
+            <zipgroupfileset dir="${lib.dir}" includes="*.jar" />
+            <manifest>
+                <attribute name="Main-Class" value="ru.nsu.ccfit.pleshkov.lab3.server.Server"/>
+            </manifest>
+        </jar>
+
+    </target>
+
+    <target name="test" >
+        <junit printsummary="on" haltonfailure="yes" fork="true">
+            <classpath>
+                <path refid="classpath.test"/>
+                <pathelement location="${tests.dir}"/>
+            </classpath>
+            <batchtest>
+                <fileset dir="${srctest.dir}" includes="**/*Test.java" />
+            </batchtest>
+        </junit>
+    </target>
+
+
+</project>
