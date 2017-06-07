@@ -7,6 +7,7 @@ import ru.nsu.ccfit.pleshkov.lab3.MessageObserver;
 import ru.nsu.ccfit.pleshkov.lab3.Observer;
 import ru.nsu.ccfit.pleshkov.lab3.messages.ServerMessage;
 import ru.nsu.ccfit.pleshkov.lab3.server.Server;
+import sun.util.resources.cldr.ms.CalendarData_ms_MY;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -18,6 +19,7 @@ public class ClientMainTest {
     public void test() throws InterruptedException {
         Server.main(new String[0]);
 
+        Thread myThread = Thread.currentThread();
         Config config;
         try {
             config = ConfigParser.parse("config/config1");
@@ -60,7 +62,7 @@ public class ClientMainTest {
                     client::addListMessage,
                     client::endIt,
                     () -> {
-
+                        //myThread.interrupt();
                     });
             client.getGui().forceLogin("xml");
         } catch (Exception e) {
@@ -111,7 +113,7 @@ public class ClientMainTest {
                     objclient::addListMessage,
                     objclient::endIt,
                     () -> {
-
+                        //myThread.interrupt();
                     });
             objclient.getGui().forceLogin("obj");
         } catch (Exception e) {
@@ -123,6 +125,7 @@ public class ClientMainTest {
             objclient.getHandler().addChatMessage(String.valueOf(i));
             client.getHandler().addChatMessage(String.valueOf(i));
         }
-        Thread.sleep(30000);
+        client.waitEnd();
+        objclient.waitEnd();
     }
 }
