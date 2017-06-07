@@ -1,5 +1,5 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
-interface SimpleObserver {
+public interface SimpleObserver {
     void update();
 }

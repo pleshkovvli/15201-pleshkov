@@ -1,31 +1,33 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
+import ru.nsu.ccfit.pleshkov.lab3.messages.Message;
+
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 
-abstract class MessagesHandler<IN extends Message, OUT extends Message> {
+public abstract class MessagesHandler<IN extends Message, OUT extends Message> {
     private Socket socket;
 
-    void endIt() {
+    public void endIt() {
         reader.interrupt();
         writer.interrupt();
     }
 
     private Thread writer;
 
-    Thread getWriter() {
+    protected Thread getWriter() {
         return writer;
     }
 
-    Thread getReader() {
+    protected Thread getReader() {
         return reader;
     }
 
     private Thread reader;
 
-    MessagesHandler(Socket socket) {
+    public MessagesHandler(Socket socket) {
         this.socket = socket;
     }
 
@@ -40,7 +42,7 @@ abstract class MessagesHandler<IN extends Message, OUT extends Message> {
     abstract protected void fin();
     abstract protected void close();
 
-    void begin(String readerName, String writerName, int timeout) {
+    public void begin(String readerName, String writerName, int timeout) {
         writer = new Thread(() -> {
             try {
                 while (!Thread.interrupted()) {

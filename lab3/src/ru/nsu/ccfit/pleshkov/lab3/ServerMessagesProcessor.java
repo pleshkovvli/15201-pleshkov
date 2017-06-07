@@ -1,6 +1,8 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
-interface ServerMessagesProcessor {
+import ru.nsu.ccfit.pleshkov.lab3.messages.*;
+
+public interface ServerMessagesProcessor {
     void process(ServerErrorMessage message);
     void process(ServerSuccessLoginMessage message);
     void process(ServerSuccessListMessage message);

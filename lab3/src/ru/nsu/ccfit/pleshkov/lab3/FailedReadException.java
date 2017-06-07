@@ -1,13 +1,13 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
-class FailedReadException extends Exception {
-    FailedReadException() {}
+public class FailedReadException extends Exception {
+    public FailedReadException() {}
 
-    FailedReadException(String message) {
+    public FailedReadException(String message) {
         super(message);
     }
 
-    FailedReadException(Exception e) {
+    public FailedReadException(Exception e) {
         super(e);
     }
 }
