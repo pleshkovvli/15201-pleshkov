@@ -11,7 +11,7 @@ public class ErrorDialog extends JDialog {
     private JLabel error;
 
 
-    final private static String WINDOW_NAME = "error";
+    final private static String WINDOW_NAME = "Error";
 
     ErrorDialog(String error) {
         setContentPane(contentPane);
