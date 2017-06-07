@@ -76,6 +76,10 @@ public class ClientGUI extends JFrame implements ClientInterface {
         this.listObserver = listObserver;
     }
 
+    void forceLogin(String name) {
+        dialog.forceLogin(name);
+    }
+
     void startMessages() {
         loggedIn = true;
         loggedOut = false;
@@ -223,6 +227,13 @@ public class ClientGUI extends JFrame implements ClientInterface {
 
         void getUser(String user, String type) {
             try {
+                Iterator<User> iterator = list.listIterator(0);
+                while (iterator.hasNext()) {
+                    User cur = iterator.next();
+                    if (cur.getType().equals(type) && cur.getName().equals(user)) {
+                        return;
+                    }
+                }
                 String text = user + " via " + type + "\n";
                 list.add(new User(user, type));
                 document.insertString(document.getLength(), text, userAttributes);
@@ -241,6 +252,7 @@ public class ClientGUI extends JFrame implements ClientInterface {
                 iterator.next();
                 iterator.remove();
             }
+            users.setText("");
             BufferedReader reader = new BufferedReader(new StringReader(mes));
             String line = "";
             while (line != null) {
@@ -395,7 +407,7 @@ public class ClientGUI extends JFrame implements ClientInterface {
         }
     }
 
-    public void connectionError() {
+    void connectionError() {
         new ErrorDialog("Failed to connect with server");
     }
 

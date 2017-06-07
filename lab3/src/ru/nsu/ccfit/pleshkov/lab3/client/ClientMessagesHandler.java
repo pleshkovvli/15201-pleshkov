@@ -50,7 +50,11 @@ implements MessageObservable<ServerMessage> {
     private BlockingQueue<ClientMessage> queue = new ArrayBlockingQueue<>(100);
 
     void addChatMessage(String message)  {
-        queue.add(new ClientChatMessage(message,sessionID));
+        try {
+            queue.put(new ClientChatMessage(message,sessionID));
+        } catch (InterruptedException e) {
+
+        }
     }
 
     void addLoginMessage(String name)  {
@@ -58,7 +62,12 @@ implements MessageObservable<ServerMessage> {
     }
 
     void addLogoutMessage()  {
-        queue.add(new ClientLogoutMessage(sessionID));
+
+        try {
+            queue.put(new ClientLogoutMessage(sessionID));
+        } catch (InterruptedException e) {
+
+        }
     }
 
     void addListMessage() {

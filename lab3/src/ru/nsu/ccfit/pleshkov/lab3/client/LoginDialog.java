@@ -62,6 +62,12 @@ public class LoginDialog extends JDialog implements Observable {
         setVisible(true);
     }
 
+    void forceLogin(String name) {
+        loginField.setText(name);
+        onOK();
+    }
+
+
     private void onOK() {
         notifyObservers();
     }
