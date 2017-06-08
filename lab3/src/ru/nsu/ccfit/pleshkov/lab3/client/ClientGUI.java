@@ -206,6 +206,8 @@ public class ClientGUI extends JFrame implements ClientInterface {
 
         private LinkedList<User> list = new LinkedList<>();
 
+        final private Object listLock = new Object();
+
         Userlist(JTextPane users) {
             users.addFocusListener(new FocusListener() {
 
@@ -226,77 +228,88 @@ public class ClientGUI extends JFrame implements ClientInterface {
         }
 
         void getUser(String user, String type) {
-            try {
-                Iterator<User> iterator = list.listIterator(0);
-                while (iterator.hasNext()) {
-                    User cur = iterator.next();
-                    if (cur.getType().equals(type) && cur.getName().equals(user)) {
-                        return;
+            synchronized (listLock) {
+                try {
+                    Iterator<User> iterator = list.listIterator(0);
+                    while (iterator.hasNext()) {
+                        User cur = iterator.next();
+                        if (cur.getType().equals(type) && cur.getName().equals(user)) {
+                            return;
+                        }
                     }
+                    String text = user + " via " + type + "\n";
+                    list.add(new User(user, type));
+                    document.insertString(document.getLength(), text, userAttributes);
+                } catch (BadLocationException e) {
+                    e.printStackTrace();
                 }
-                String text = user + " via " + type + "\n";
-                list.add(new User(user, type));
-                document.insertString(document.getLength(), text, userAttributes);
-            } catch (BadLocationException e) {
-                e.printStackTrace();
             }
         }
 
         void clear() {
-            users.setText("");
-        }
-
-        void getList(String mes) {
             Iterator<User> iterator = list.listIterator(0);
             while (iterator.hasNext()) {
                 iterator.next();
                 iterator.remove();
             }
             users.setText("");
-            BufferedReader reader = new BufferedReader(new StringReader(mes));
-            String line = "";
-            while (line != null) {
-                try {
-                    line = reader.readLine();
-                    if (line != null) {
-                        String user = line.substring(0, line.lastIndexOf("$"));
-                        String type = line.substring(line.lastIndexOf("$") + 1);
-                        getUser(user, type);
+        }
+
+        void getList(String mes) {
+            synchronized (listLock) {
+                Iterator<User> iterator = list.listIterator(0);
+                while (iterator.hasNext()) {
+                    iterator.next();
+                    iterator.remove();
+                }
+                users.setText("");
+                BufferedReader reader = new BufferedReader(new StringReader(mes));
+                String line = "";
+                while (line != null) {
+                    try {
+                        line = reader.readLine();
+                        if (line != null) {
+                            String user = line.substring(0, line.lastIndexOf("$"));
+                            String type = line.substring(line.lastIndexOf("$") + 1);
+                            getUser(user, type);
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        return;
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    return;
                 }
             }
         }
 
         void removeUser(String removingUser) {
-            try {
-                int length = 0;
-                Iterator<User> iterator = list.listIterator(0);
-                if (!iterator.hasNext()) {
-                    return;
-                }
-                User user = iterator.next();
-                String userName = user.getName();
-                if (removingUser.equals(userName)) {
-                    document.remove(length, userName.length() + user.getType().length() + 6);
-                    iterator.remove();
-                    return;
-                }
-                while (iterator.hasNext()) {
-                    length += userName.length() + user.getType().length() + 6;
-                    user = iterator.next();
-                    userName = user.getName();
+            synchronized (listLock) {
+                try {
+                    int length = 0;
+                    Iterator<User> iterator = list.listIterator(0);
+                    if (!iterator.hasNext()) {
+                        return;
+                    }
+                    User user = iterator.next();
+                    String userName = user.getName();
                     if (removingUser.equals(userName)) {
                         document.remove(length, userName.length() + user.getType().length() + 6);
                         iterator.remove();
-                        break;
+                        return;
                     }
-                }
+                    while (iterator.hasNext()) {
+                        length += userName.length() + user.getType().length() + 6;
+                        user = iterator.next();
+                        userName = user.getName();
+                        if (removingUser.equals(userName)) {
+                            document.remove(length, userName.length() + user.getType().length() + 6);
+                            iterator.remove();
+                            break;
+                        }
+                    }
 
-            } catch (BadLocationException e) {
-                e.printStackTrace();
+                } catch (BadLocationException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
