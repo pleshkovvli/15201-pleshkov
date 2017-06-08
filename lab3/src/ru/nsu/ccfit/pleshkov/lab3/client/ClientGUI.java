@@ -274,6 +274,9 @@ public class ClientGUI extends JFrame implements ClientInterface {
             try {
                 int length = 0;
                 Iterator<User> iterator = list.listIterator(0);
+                if (!iterator.hasNext()) {
+                    return;
+                }
                 User user = iterator.next();
                 String userName = user.getName();
                 if (removingUser.equals(userName)) {

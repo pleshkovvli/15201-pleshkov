@@ -26,6 +26,7 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMe
 
     static private final int MAX_MESSAGE_SIZE = 10000;
     private byte[] bytes = new byte[MAX_MESSAGE_SIZE];
+    private DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
     ServerXMLMessagesHandler(Socket socket) throws IOException {
         super(socket);
@@ -48,7 +49,7 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMe
     protected ClientMessage readMessage() throws IOException, FailedReadException {
         ClientMessage message;
         try {
-            DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            DocumentBuilder builder = factory.newDocumentBuilder();
             int length = messagesReader.readInt();
             if(length <= 0 || length > MAX_MESSAGE_SIZE) {
                 throw new FailedReadException();
@@ -91,7 +92,7 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMe
     public void process(ServerErrorMessage message) {
         Element error = doc.createElement("error");
         doc.appendChild(error);
-        Element reason = doc.createElement("reason");
+        Element reason = doc.createElement("message");
         reason.setTextContent(message.getReason());
         error.appendChild(reason);
     }
@@ -177,7 +178,7 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMe
     protected void writeMessage(ServerMessage message) throws IOException {
         DocumentBuilder builder;
         try {
-            builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            builder = factory.newDocumentBuilder();
         } catch (ParserConfigurationException e) {
             return;
         }

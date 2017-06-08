@@ -26,6 +26,7 @@ class ClientXMLMessagesHandler extends ClientMessagesHandler implements ClientMe
 
     private DataInputStream messagesReader;
     private DataOutputStream messagesWriter;
+    private DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
     ClientXMLMessagesHandler(Socket socket, String clientName, Client client) throws IOException {
         super(socket,clientName,client);
@@ -58,7 +59,7 @@ class ClientXMLMessagesHandler extends ClientMessagesHandler implements ClientMe
     @Override
     protected ServerMessage readMessage() throws IOException, FailedReadException {
         try {
-            DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            DocumentBuilder builder = factory.newDocumentBuilder();
             int length = messagesReader.readInt();
             if(length <= 0 || length > MAX_MESSAGE_SIZE) {
                 throw new FailedReadException();
@@ -71,7 +72,7 @@ class ClientXMLMessagesHandler extends ClientMessagesHandler implements ClientMe
                     new InputStreamReader(new ByteArrayInputStream(bytes,0,length),"UTF-8")));
             String type = document.getDocumentElement().getTagName();
             if(type.equals("error")) {
-                return new ServerErrorMessage(document.getElementsByTagName("reason").item(0).getTextContent());
+                return new ServerErrorMessage(document.getElementsByTagName("message").item(0).getTextContent());
             }
             if(type.equals("event")) {
                 String event = document.getDocumentElement().getAttribute("name");
@@ -105,13 +106,16 @@ class ClientXMLMessagesHandler extends ClientMessagesHandler implements ClientMe
                 }
                 ArrayList<User> listusers = new ArrayList<>();
                 for(int i = 0; i < list.getLength(); i++) {
-                    listusers.add(new User(list.item(i).getChildNodes().item(0).getTextContent(),
-                            list.item(i).getChildNodes().item(1).getTextContent()));
+                    Element user = (Element) list.item(i);
+                    listusers.add(new User(user.getElementsByTagName("name").item(0).getTextContent(),
+                            user.getElementsByTagName("type").item(0).getTextContent()));
                 }
                 return new ServerSuccessListMessage(listusers);
             }
         } catch (ParserConfigurationException | SAXException e) {
             throw new FailedReadException(e);
+        } catch (NullPointerException e) {
+            e.printStackTrace();
         }
         throw new FailedReadException();
     }
