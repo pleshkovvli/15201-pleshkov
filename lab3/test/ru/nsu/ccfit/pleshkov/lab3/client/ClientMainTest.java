@@ -22,7 +22,7 @@ public class ClientMainTest {
         Thread myThread = Thread.currentThread();
         Config config;
         try {
-            config = ConfigParser.parse("config/config1");
+            config = ConfigParser.parse("config/config-xml");
         } catch (BadParsingException e) {
             Assert.fail();
             return;
@@ -72,7 +72,7 @@ public class ClientMainTest {
 
         Config config1;
         try {
-            config1 = ConfigParser.parse("config/config2");
+            config1 = ConfigParser.parse("config/config-obj");
         } catch (BadParsingException e) {
             Assert.fail();
             return;
