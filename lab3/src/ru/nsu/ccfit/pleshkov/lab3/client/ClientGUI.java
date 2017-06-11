@@ -73,6 +73,7 @@ public class ClientGUI extends JFrame implements ClientInterface {
 
     void startMessaging() {
         dialog.setVisible(false);
+        messagesHistory.clearText();
         listObserver.update();
         setTitle(WINDOW_NAME + ": " + login.getName());
         this.setVisible(true);
@@ -313,6 +314,7 @@ public class ClientGUI extends JFrame implements ClientInterface {
 
     private class Messages {
 
+        private JTextPane messages;
         private StyledDocument document;
         private SimpleAttributeSet unhandledMessageAttributes = new SimpleAttributeSet();
         private SimpleAttributeSet failedMessageAttributes = new SimpleAttributeSet();
@@ -322,6 +324,7 @@ public class ClientGUI extends JFrame implements ClientInterface {
         private BlockingQueue<Position> unhandledMessagesQueue = new ArrayBlockingQueue<>(20);
 
         Messages(JTextPane messages) {
+            this.messages = messages;
             messages.addFocusListener(new FocusListener() {
 
                 @Override
@@ -388,6 +391,10 @@ public class ClientGUI extends JFrame implements ClientInterface {
             } catch (BadLocationException e) {
                 e.printStackTrace();
             }
+        }
+
+        void clearText() {
+            messages.setText("");
         }
 
         private class Position {

@@ -21,6 +21,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 abstract class ServerMessagesHandler extends MessagesHandler<ClientMessage, ServerMessage>
 implements ClientMessagesProcessor {
+    static private BlockingQueue<ServerMessage> commonQueue = new ArrayBlockingQueue<>(100);
+
+    static private boolean filled = false;
+
     private BlockingQueue<ServerMessage> queue = new ArrayBlockingQueue<>(100);
 
     final private static AtomicInteger sessionID = new AtomicInteger(1);
@@ -79,6 +83,8 @@ implements ClientMessagesProcessor {
                 }
             }
         }
+        logger.info("Closing streams and socket");
+        close();
     }
 
     @Override
@@ -118,6 +124,16 @@ implements ClientMessagesProcessor {
                 logger.warn("Thread was interrupted");
             }
             ServerChatMessage response = new ServerChatMessage(message.getMessage(),client.getName());
+            try {
+                if(filled) {
+                    commonQueue.take();
+                } else if(commonQueue.size() > 20) {
+                    filled = true;
+                }
+                commonQueue.put(response);
+            } catch (InterruptedException e) {
+                logger.warn("Thread was interrupted");
+            }
             for(ClientInfo client : clients.values()) {
                 if((client.getHandler() != this) && client.isOnline()) {
                     try {
@@ -205,6 +221,7 @@ implements ClientMessagesProcessor {
             } catch (InterruptedException e) {
                 logger.warn("Thread was interrupted");
             }
+            client.setOnline(false);
             for(ClientInfo client : clients.values()) {
                 if((client.getHandler() != this) && client.isOnline()) {
                     try {
@@ -216,6 +233,12 @@ implements ClientMessagesProcessor {
             }
         }
         logger.info("Handled with logout message from " + name);
+    }
+
+    @Override
+    public void endIt() {
+        super.endIt();
+        close();
     }
 
     @Override
@@ -244,6 +267,9 @@ implements ClientMessagesProcessor {
                 }
             }
             queue.add(new ServerSuccessListMessage(listusers));
+            for (ServerMessage oldMessage: commonQueue) {
+                queue.add(oldMessage);
+            }
         }
         logger.info("Got list message from " + client.getName());
     }

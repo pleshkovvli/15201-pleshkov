@@ -17,7 +17,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.*;
 import java.net.Socket;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 
@@ -48,10 +47,11 @@ class ClientXMLMessagesHandler extends ClientMessagesHandler implements ClientMe
     @Override
     protected void close() {
         try {
+            getSocket().close();
             messagesWriter.close();
             messagesReader.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println(e.getMessage());
         }
     }
 
@@ -81,6 +81,7 @@ class ClientXMLMessagesHandler extends ClientMessagesHandler implements ClientMe
             }
             byte[] bytes = new byte[length];
             int read = 0;
+            int failed = 0;
             while (read < length) {
                 try {
                     int result = messagesReader.read(bytes,read,length - read);
@@ -91,6 +92,10 @@ class ClientXMLMessagesHandler extends ClientMessagesHandler implements ClientMe
                 } catch (SocketTimeoutException e) {
                     if(getSocket().isClosed())  {
                         throw e;
+                    }
+                    ++failed;
+                    if(failed > 10) {
+                        throw new FailedReadException();
                     }
                 }
             }

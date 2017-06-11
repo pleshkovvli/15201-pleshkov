@@ -33,10 +33,11 @@ class ClientObjectMessagesHandler extends ClientMessagesHandler {
     @Override
     protected void close() {
         try {
+            getSocket().close();
             messagesWriter.close();
             messagesReader.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println(e.getMessage());
         }
     }
 

@@ -25,6 +25,7 @@ public abstract class MessagesHandler<IN extends Message, OUT extends Message> {
     public MessagesHandler(Socket socket) throws SocketException {
         this.socket = socket;
         socket.setSoTimeout(1000);
+        socket.setKeepAlive(true);
     }
 
     abstract protected IN readMessage() throws IOException, InterruptedException, FailedReadException, UnknownMessageException;
@@ -40,7 +41,7 @@ public abstract class MessagesHandler<IN extends Message, OUT extends Message> {
     abstract protected void fin();
     abstract protected void close();
 
-    public void begin(String readerName, String writerName, int timeout) {
+    public void begin(String readerName, String writerName) {
         writer = new Thread(() -> {
             try {
                 while (!Thread.interrupted()) {
@@ -85,11 +86,6 @@ public abstract class MessagesHandler<IN extends Message, OUT extends Message> {
             endReading();
         }, readerName);
         reader.start();
-        try {
-            socket.setSoTimeout(timeout);
-        } catch (SocketException e) {
-            e.printStackTrace();
-        }
         fin();
     }
 }

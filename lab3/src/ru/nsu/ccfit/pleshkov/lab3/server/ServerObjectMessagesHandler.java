@@ -47,14 +47,4 @@ class ServerObjectMessagesHandler extends ServerMessagesHandler {
         messagesWriter.writeObject(message);
         getLogger().info("Writing message " + message.getClass().getSimpleName());
     }
-
-    @Override
-    protected void endWriting() {
-        super.endWriting();
-    }
-
-    @Override
-    protected void endReading() {
-        super.endReading();
-    }
 }

@@ -42,7 +42,7 @@ public class Server {
                         socket = serverSocket.accept();
                         ServerMessagesHandler handler = new ServerXMLMessagesHandler(socket);
                         handler.begin("ServerXMLWriter#" + String.valueOf(i),
-                                "ServerXMLReader#" + String.valueOf(i),TIMEOUT);
+                                "ServerXMLReader#" + String.valueOf(i));
                         ++i;
                     } catch (SocketTimeoutException e) {
                         if(serverSocket.isClosed()) {
@@ -67,7 +67,7 @@ public class Server {
                         socket = serverSocket.accept();
                         ServerMessagesHandler handler = new ServerObjectMessagesHandler(socket);
                         handler.begin("ServerObjectsWriter#" + String.valueOf(i),
-                                "ServerObjectsReader#" + String.valueOf(i),TIMEOUT);
+                                "ServerObjectsReader#" + String.valueOf(i));
                         ++i;
                     } catch (SocketTimeoutException e) {
                         if(serverSocket.isClosed()) {

@@ -123,7 +123,7 @@ class Client implements ServerMessagesProcessor, Observer<Config> {
 
 
     void begin(Config config) {
-        handler.begin("Writer", "Reader",TIMEOUT);
+        handler.begin("Writer", "Reader");
         if(connected) {
             gui.connectionEstablished();
             addListMessage();

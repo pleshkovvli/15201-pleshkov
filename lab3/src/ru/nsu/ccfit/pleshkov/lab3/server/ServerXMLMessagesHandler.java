@@ -66,6 +66,7 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMe
             }
             byte[] bytes = new byte[length];
             int read = 0;
+            int failed = 0;
             while (read < length) {
                 try {
                     int result = messagesReader.read(bytes,read,length - read);
@@ -76,6 +77,10 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMe
                 } catch (SocketTimeoutException e) {
                     if(getSocket().isClosed())  {
                         throw e;
+                    }
+                    ++failed;
+                    if(failed > 10) {
+                        throw new FailedReadException();
                     }
                 }
             }

@@ -57,8 +57,13 @@ implements MessageObservable<ServerMessage> {
         }
     }
 
-
     @Override
+    public void endIt() {
+        super.endIt();
+        close();
+    }
+
+        @Override
     protected void handleUnknownMessage() {
         client.handleUnknownMessage();
     }
@@ -87,6 +92,7 @@ implements MessageObservable<ServerMessage> {
     @Override
     protected void handleConnectionBreak() {
         client.showConnectionBreak();
+        endIt();
     }
 
 
