@@ -2,7 +2,7 @@ package ru.nsu.ccfit.pleshkov.lab3;
 
 import java.io.Serializable;
 
-public class User implements Serializable {
+public class User implements Serializable, UserElement {
     final private String name;
 
     public String getName() {

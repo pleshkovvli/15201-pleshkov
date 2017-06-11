@@ -1,15 +1,14 @@
 package ru.nsu.ccfit.pleshkov.lab3.client;
 
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import ru.nsu.ccfit.pleshkov.lab3.*;
 
 import javax.swing.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
+import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -18,37 +17,48 @@ import java.util.concurrent.BlockingQueue;
 
 public class ClientGUI extends JFrame implements ClientInterface {
     private JPanel Panel;
-    private JTextArea currentMessage;
+    private JScrollPane currentMessage;
     private JButton logoutButton;
-    private JTextPane previousMessages;
-    private JTextPane userlist;
-    private JLabel loginText;
+    private JTextPane previousMessagesText;
+    private JTextPane userListText;
+    private JTextArea currentMessageText;
+    private JScrollPane previousMessages;
+    private JScrollPane userList;
+    private JButton reconnectButton;
+    private ClickButton reconnect;
     private LogoutButton logoutClick;
     private MessageForm messageForm;
-    private Messages messages;
+    private Messages messagesHistory;
     private LoginDialog dialog;
-    private Userlist list;
+    private Userlist connectedUsers;
     private SimpleObserver listObserver;
-    private SimpleObserver fin;
-    private boolean loggedOut = false;
-    private boolean failedLoggedOut = false;
-    private boolean loggedIn = false;
-    private boolean listed = false;
-    final private Object loggedOutLock = new Object();
+    private Config login;
 
     static final private String WINDOW_NAME = "Chat";
 
-    private BlockingQueue<String> sendedMessages = new ArrayBlockingQueue<>(10);
 
-    ClientGUI() {
+    ClientGUI(Observer<Config> start, Observer<String> messagesObserver,
+              SimpleObserver logoutObserver, SimpleObserver listObserver, SimpleObserver fin) {
         setContentPane(Panel);
         setBounds(400, 200, 600, 500);
-        logoutButton.setText("Logout");
-        setTitle(WINDOW_NAME);
-        messageForm = new MessageForm(currentMessage);
+        messageForm = new MessageForm(currentMessageText);
         logoutClick = new LogoutButton(logoutButton);
-        messages = new Messages(previousMessages);
-        list = new Userlist(userlist);
+        messagesHistory = new Messages(previousMessagesText);
+        connectedUsers = new Userlist(userListText);
+        messageForm.addObserver((String message) -> SwingUtilities.invokeLater(() -> messagesObserver.update(message)));
+        dialog = new LoginDialog(() -> {
+            fin.update();
+            this.dispose();
+        });
+        dialog.addObserver((Config config) -> SwingUtilities.invokeLater(() -> {
+            login = config;
+            start.update(config);
+        }));
+        reconnect = new ClickButton(reconnectButton);
+        reconnect.addSimpleObserver(() -> start.update(login));
+        reconnectButton.setVisible(false);
+        logoutClick.addSimpleObserver(logoutObserver);
+        this.listObserver = listObserver;
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
@@ -57,35 +67,14 @@ public class ClientGUI extends JFrame implements ClientInterface {
         });
     }
 
-    void init(Observer loginObserver, Observer messagesObserver,
-              SimpleObserver logoutObserver, SimpleObserver listObserver,
-              SimpleObserver fin, SimpleObserver terminate) {
-        this.fin = fin;
-        messageForm.clearObservers();
-        messageForm.addObserver((String message) -> SwingUtilities.invokeLater(() -> messagesObserver.update(message)));
-        dialog = new LoginDialog(() -> {
-            terminate.update();
-            this.dispose();
-        });
-        dialog.addObserver((String message) -> SwingUtilities.invokeLater(() -> {
-            loginObserver.update(message);
-            loginText.setText(message);
-        }));
-        logoutClick.clearObservers();
-        logoutClick.addSimpleObserver(logoutObserver);
-        this.listObserver = listObserver;
-    }
-
     void forceLogin(String name) {
         dialog.forceLogin(name);
     }
 
-    void startMessages() {
-        loggedIn = true;
-        loggedOut = false;
-        dialog.dispose();
-        listed = false;
+    void startMessaging() {
+        dialog.setVisible(false);
         listObserver.update();
+        setTitle(WINDOW_NAME + ": " + login.getName());
         this.setVisible(true);
     }
 
@@ -105,29 +94,36 @@ public class ClientGUI extends JFrame implements ClientInterface {
      */
     private void $$$setupUI$$$() {
         Panel = new JPanel();
-        Panel.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(8, 4, new Insets(0, 0, 0, 0), -1, -1));
-        final com.intellij.uiDesigner.core.Spacer spacer1 = new com.intellij.uiDesigner.core.Spacer();
-        Panel.add(spacer1, new com.intellij.uiDesigner.core.GridConstraints(1, 3, 2, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_HORIZONTAL, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, 1, null, new Dimension(20, 10), null, 0, false));
-        previousMessages = new JTextPane();
-        Panel.add(previousMessages, new com.intellij.uiDesigner.core.GridConstraints(1, 2, 3, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(300, 400), null, 0, false));
-        currentMessage = new JTextArea();
-        currentMessage.setText("");
-        Panel.add(currentMessage, new com.intellij.uiDesigner.core.GridConstraints(5, 2, 2, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_WEST, com.intellij.uiDesigner.core.GridConstraints.FILL_HORIZONTAL, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(300, 50), null, 0, false));
-        userlist = new JTextPane();
-        userlist.setText("");
-        Panel.add(userlist, new com.intellij.uiDesigner.core.GridConstraints(1, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(50, 100), null, 0, false));
-        final com.intellij.uiDesigner.core.Spacer spacer2 = new com.intellij.uiDesigner.core.Spacer();
-        Panel.add(spacer2, new com.intellij.uiDesigner.core.GridConstraints(1, 0, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_HORIZONTAL, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, 1, null, new Dimension(10, 10), null, 0, false));
-        loginText = new JLabel();
-        loginText.setText("Label");
-        Panel.add(loginText, new com.intellij.uiDesigner.core.GridConstraints(6, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_NONE, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        Panel.setLayout(new GridLayoutManager(8, 4, new Insets(0, 0, 0, 0), -1, -1));
+        final Spacer spacer1 = new Spacer();
+        Panel.add(spacer1, new GridConstraints(1, 3, 2, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_FIXED, 1, null, new Dimension(20, 10), null, 0, false));
+        final Spacer spacer2 = new Spacer();
+        Panel.add(spacer2, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_FIXED, 1, null, new Dimension(10, 10), null, 0, false));
         logoutButton = new JButton();
         logoutButton.setText("Button");
-        Panel.add(logoutButton, new com.intellij.uiDesigner.core.GridConstraints(5, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_HORIZONTAL, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(40, 10), null, 0, false));
-        final com.intellij.uiDesigner.core.Spacer spacer3 = new com.intellij.uiDesigner.core.Spacer();
-        Panel.add(spacer3, new com.intellij.uiDesigner.core.GridConstraints(7, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_VERTICAL, 1, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(10, 10), null, 0, false));
-        final com.intellij.uiDesigner.core.Spacer spacer4 = new com.intellij.uiDesigner.core.Spacer();
-        Panel.add(spacer4, new com.intellij.uiDesigner.core.GridConstraints(4, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_VERTICAL, 1, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(10, 10), null, 0, false));
+        Panel.add(logoutButton, new GridConstraints(6, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, 1, 1, null, new Dimension(200, 30), new Dimension(200, 30), 0, false));
+        final Spacer spacer3 = new Spacer();
+        Panel.add(spacer3, new GridConstraints(7, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(10, 10), null, 0, false));
+        final Spacer spacer4 = new Spacer();
+        Panel.add(spacer4, new GridConstraints(4, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(10, 10), null, 0, false));
+        currentMessage = new JScrollPane();
+        Panel.add(currentMessage, new GridConstraints(5, 2, 2, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(300, 70), null, 0, false));
+        currentMessageText = new JTextArea();
+        currentMessageText.setLineWrap(true);
+        currentMessageText.setWrapStyleWord(true);
+        currentMessage.setViewportView(currentMessageText);
+        previousMessages = new JScrollPane();
+        Panel.add(previousMessages, new GridConstraints(1, 2, 3, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(300, 350), null, 0, false));
+        previousMessagesText = new JTextPane();
+        previousMessages.setViewportView(previousMessagesText);
+        userList = new JScrollPane();
+        Panel.add(userList, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(150, 350), null, 0, false));
+        userListText = new JTextPane();
+        userListText.setText("");
+        userList.setViewportView(userListText);
+        reconnectButton = new JButton();
+        reconnectButton.setText("Button");
+        Panel.add(reconnectButton, new GridConstraints(5, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(200, 30), new Dimension(200, 30), 0, false));
     }
 
     /**
@@ -140,36 +136,12 @@ public class ClientGUI extends JFrame implements ClientInterface {
     private class LogoutButton extends ClickButton {
         LogoutButton(JButton button) {
             super(button);
+            logoutButton.setText("Logout");
         }
 
         @Override
         public void notifySimpleObservers() {
             super.notifySimpleObservers();
-            synchronized (loggedOutLock) {
-                try {
-                    while (!loggedOut) {
-                        loggedOutLock.wait();
-                        if (failedLoggedOut) {
-                            failedLoggedOut = false;
-                            return;
-                        }
-                    }
-                } catch (InterruptedException e) {
-
-                }
-            }
-            loggedIn = false;
-            list.clear();
-            ClientGUI.this.setVisible(false);
-            fin.update();
-        }
-
-        void clearObservers() {
-            Iterator<SimpleObserver> iterator = observers.listIterator(0);
-            while (iterator.hasNext()) {
-                iterator.next();
-                iterator.remove();
-            }
         }
     }
 
@@ -182,9 +154,7 @@ public class ClientGUI extends JFrame implements ClientInterface {
 
         @Override
         public void notifySimpleObservers() {
-            for (SimpleObserver observer : observers) {
-                observer.update();
-            }
+            observers.forEach(SimpleObserver::update);
         }
 
         @Override
@@ -196,6 +166,7 @@ public class ClientGUI extends JFrame implements ClientInterface {
         public void addSimpleObserver(SimpleObserver observer) {
             observers.add(observer);
         }
+
     }
 
 
@@ -206,9 +177,8 @@ public class ClientGUI extends JFrame implements ClientInterface {
 
         private LinkedList<User> list = new LinkedList<>();
 
-        final private Object listLock = new Object();
-
         Userlist(JTextPane users) {
+            users.setEditorKit(new WrapEditorKit());
             users.addFocusListener(new FocusListener() {
 
                 @Override
@@ -227,22 +197,20 @@ public class ClientGUI extends JFrame implements ClientInterface {
             document = users.getStyledDocument();
         }
 
-        void getUser(String user, String type) {
-            synchronized (listLock) {
-                try {
-                    Iterator<User> iterator = list.listIterator(0);
-                    while (iterator.hasNext()) {
-                        User cur = iterator.next();
-                        if (cur.getType().equals(type) && cur.getName().equals(user)) {
-                            return;
-                        }
+        void addUser(String user, String type) {
+            try {
+                Iterator<User> iterator = list.listIterator(0);
+                while (iterator.hasNext()) {
+                    User current = iterator.next();
+                    if (current.getType().equals(type) && current.getName().equals(user)) {
+                        return;
                     }
-                    String text = user + " via " + type + "\n";
-                    list.add(new User(user, type));
-                    document.insertString(document.getLength(), text, userAttributes);
-                } catch (BadLocationException e) {
-                    e.printStackTrace();
                 }
+                String text = user + " via " + type + "\n";
+                document.insertString(document.getLength(), text, userAttributes);
+                list.add(new User(user, type));
+            } catch (BadLocationException e) {
+                showError("Failed to change list");
             }
         }
 
@@ -255,71 +223,103 @@ public class ClientGUI extends JFrame implements ClientInterface {
             users.setText("");
         }
 
-        void getList(String mes) {
-            synchronized (listLock) {
-                Iterator<User> iterator = list.listIterator(0);
-                while (iterator.hasNext()) {
-                    iterator.next();
-                    iterator.remove();
-                }
-                users.setText("");
-                BufferedReader reader = new BufferedReader(new StringReader(mes));
-                String line = "";
-                while (line != null) {
-                    try {
-                        line = reader.readLine();
-                        if (line != null) {
-                            String user = line.substring(0, line.lastIndexOf("$"));
-                            String type = line.substring(line.lastIndexOf("$") + 1);
-                            getUser(user, type);
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        return;
-                    }
-                }
+        void setList(java.util.List<? extends UserElement> list) {
+            clear();
+            Iterator<? extends UserElement> iterator = list.listIterator(0);
+            while (iterator.hasNext()) {
+                UserElement userElement = iterator.next();
+                addUser(userElement.getName(), userElement.getType());
             }
         }
 
         void removeUser(String removingUser) {
-            synchronized (listLock) {
-                try {
-                    int length = 0;
-                    Iterator<User> iterator = list.listIterator(0);
-                    if (!iterator.hasNext()) {
-                        return;
-                    }
-                    User user = iterator.next();
-                    String userName = user.getName();
+            try {
+                int length = 0;
+                Iterator<User> iterator = list.listIterator(0);
+                if (!iterator.hasNext()) {
+                    return;
+                }
+                User user = iterator.next();
+                String userName = user.getName();
+                if (removingUser.equals(userName)) {
+                    document.remove(length, userName.length() + user.getType().length() + 6);
+                    iterator.remove();
+                    return;
+                }
+                while (iterator.hasNext()) {
+                    length += userName.length() + user.getType().length() + 6;
+                    user = iterator.next();
+                    userName = user.getName();
                     if (removingUser.equals(userName)) {
                         document.remove(length, userName.length() + user.getType().length() + 6);
                         iterator.remove();
-                        return;
+                        break;
                     }
-                    while (iterator.hasNext()) {
-                        length += userName.length() + user.getType().length() + 6;
-                        user = iterator.next();
-                        userName = user.getName();
-                        if (removingUser.equals(userName)) {
-                            document.remove(length, userName.length() + user.getType().length() + 6);
-                            iterator.remove();
-                            break;
-                        }
-                    }
-
-                } catch (BadLocationException e) {
-                    e.printStackTrace();
                 }
+            } catch (BadLocationException e) {
+                showError("Failed to change list");
             }
         }
     }
 
+    private class WrapEditorKit extends StyledEditorKit {
+        ViewFactory defaultFactory = new WrapColumnFactory();
+
+        public ViewFactory getViewFactory() {
+            return defaultFactory;
+        }
+
+    }
+
+    private class WrapColumnFactory implements ViewFactory {
+        public View create(Element elem) {
+            String kind = elem.getName();
+            if (kind != null) {
+                switch (kind) {
+                    case AbstractDocument.ContentElementName:
+                        return new WrapLabelView(elem);
+                    case AbstractDocument.ParagraphElementName:
+                        return new ParagraphView(elem);
+                    case AbstractDocument.SectionElementName:
+                        return new BoxView(elem, View.Y_AXIS);
+                    case StyleConstants.ComponentElementName:
+                        return new ComponentView(elem);
+                    case StyleConstants.IconElementName:
+                        return new IconView(elem);
+                }
+            }
+            return new LabelView(elem);
+        }
+    }
+
+    private class WrapLabelView extends LabelView {
+        WrapLabelView(Element elem) {
+            super(elem);
+        }
+
+        public float getMinimumSpan(int axis) {
+            switch (axis) {
+                case View.X_AXIS:
+                    return 0;
+                case View.Y_AXIS:
+                    return super.getMinimumSpan(axis);
+                default:
+                    throw new IllegalArgumentException("Invalid axis: " + axis);
+            }
+        }
+
+    }
+
+
     private class Messages {
+
         private StyledDocument document;
+        private SimpleAttributeSet unhandledMessageAttributes = new SimpleAttributeSet();
+        private SimpleAttributeSet failedMessageAttributes = new SimpleAttributeSet();
         private SimpleAttributeSet messageAttributes = new SimpleAttributeSet();
         private SimpleAttributeSet errorAttributes = new SimpleAttributeSet();
 
-        private LimitedQueue<String> messagesQueue = new LimitedQueue<>(10);
+        private BlockingQueue<Position> unhandledMessagesQueue = new ArrayBlockingQueue<>(20);
 
         Messages(JTextPane messages) {
             messages.addFocusListener(new FocusListener() {
@@ -336,150 +336,175 @@ public class ClientGUI extends JFrame implements ClientInterface {
 
                 }
             });
+            messages.setEditorKit(new WrapEditorKit());
+            DefaultCaret caret = (DefaultCaret) messages.getCaret();
+            caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
             document = messages.getStyledDocument();
             StyleConstants.setForeground(errorAttributes, Color.RED);
+            StyleConstants.setForeground(unhandledMessageAttributes, Color.GRAY);
+            StyleConstants.setForeground(failedMessageAttributes, Color.RED);
+            StyleConstants.setForeground(messageAttributes, Color.BLACK);
         }
 
-        void updateText(String mes) {
+        void approveMessage() {
+            if (!unhandledMessagesQueue.isEmpty()) {
+                Position position = unhandledMessagesQueue.poll();
+                document.setCharacterAttributes(position.getOffset(), position.getLength(),
+                        messageAttributes, true);
+            }
+        }
+
+        void declineMessage() {
+            if (!unhandledMessagesQueue.isEmpty()) {
+                Position position = unhandledMessagesQueue.poll();
+                document.setCharacterAttributes(position.getOffset(), position.getLength(),
+                        failedMessageAttributes, true);
+            }
+        }
+
+        void printMessage(String mes) {
             try {
                 String text = mes + "\n";
-                String last = messagesQueue.preemptiveAdd(text);
-                if (last != null) {
-                    shrinkText(last.length());
-                }
                 document.insertString(document.getLength(), text, messageAttributes);
             } catch (BadLocationException e) {
-                e.printStackTrace();
+                showError("Failed to print message");
             }
         }
 
-        void shrinkText(int length) {
-            try {
-                document.remove(0, length);
-            } catch (BadLocationException e) {
-                e.printStackTrace();
-            }
-        }
-
-        void errorText(String mes) {
+        void printMyMessage(String mes) {
             try {
                 String text = mes + "\n";
-                String last = messagesQueue.preemptiveAdd(text);
-                if (last != null) {
-                    shrinkText(last.length());
-                }
-                document.insertString(document.getLength(), mes + "\n", errorAttributes);
+                unhandledMessagesQueue.add(new Position(document.getLength(), text.length()));
+                document.insertString(document.getLength(), text, unhandledMessageAttributes);
+            } catch (BadLocationException e) {
+                showError("Failed to show message");
+            }
+        }
+
+        void printError(String mes) {
+            try {
+                String text = mes + "\n";
+                document.insertString(document.getLength(), text, errorAttributes);
             } catch (BadLocationException e) {
                 e.printStackTrace();
             }
+        }
+
+        private class Position {
+            int getOffset() {
+                return offset;
+            }
+
+            int getLength() {
+                return length;
+            }
+
+            private final int offset;
+
+            Position(int offset, int length) {
+                this.offset = offset;
+                this.length = length;
+            }
+
+            private final int length;
         }
     }
 
     @Override
     public void showSuccess() {
-        if (sendedMessages.size() > 0) {
-            try {
-                messages.updateText(sendedMessages.take());
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        } else {
-            synchronized (loggedOutLock) {
-                loggedOut = true;
-                loggedOutLock.notifyAll();
-            }
-        }
+
+    }
+
+    void approveMessage() {
+        messagesHistory.approveMessage();
+    }
+
+    void declineMessage() {
+        messagesHistory.declineMessage();
+    }
+
+    void showLoginError(String message) {
+        dialog.showError(message);
+    }
+
+    void showLogout() {
+        this.setVisible(false);
+        dialog.setVisible(true);
     }
 
     @Override
     public void showMessage(String message, String sender) {
-        messages.updateText(sender + ": " + message);
+        messagesHistory.printMessage(sender + ": " + message);
     }
 
     @Override
     public void showError(String error) {
-        if (!loggedIn) {
-            dialog.showError();
-            return;
-        }
-        if (!listed) {
-            listed = true;
-            messages.errorText(error);
-            return;
-        }
-        if (sendedMessages.size() > 0) {
-            try {
-                messages.errorText(sendedMessages.take() + "\n"
-                        + error);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        } else {
-            synchronized (loggedOutLock) {
-                messages.errorText(error);
-                failedLoggedOut = true;
-                loggedOutLock.notifyAll();
-            }
-        }
+        messagesHistory.printError(error);
     }
 
     void connectionError() {
         new ErrorDialog("Failed to connect with server");
     }
 
+    void connectionBroken() {
+        showError("Connection broken");
+        reconnectButton.setVisible(true);
+    }
+
+    void connectionEstablished() {
+        reconnectButton.setVisible(false);
+    }
+
     @Override
-    public void showList(String listString) {
-        listed = true;
-        list.getList(listString);
+    public void showList(java.util.List<? extends UserElement> list) {
+        connectedUsers.setList(list);
     }
 
     @Override
     public void showUserlogin(String user, String type) {
-        list.getUser(user, type);
+        connectedUsers.addUser(user, type);
     }
 
     @Override
     public void showUserlogout(String user) {
-        list.removeUser(user);
+        connectedUsers.removeUser(user);
     }
 
-    private class MessageForm implements Observable {
+    private class MessageForm implements Observable<String> {
         MessageForm(JTextArea form) {
             this.form = form;
-            form.setLineWrap(true);
-            form.setWrapStyleWord(true);
             addAction(() -> {
                 currentText = form.getText();
-                sendedMessages.add("~: " + currentText);
-                messageForm.form.setText("");
+                messagesHistory.printMyMessage("~: " + currentText);
                 messageForm.notifyObservers();
+                messageForm.form.setText("");
             });
         }
 
-        private ArrayList<Observer> observers = new ArrayList<>();
+        private ArrayList<Observer<String>> observers = new ArrayList<>();
 
         private JTextArea form;
 
         private String currentText;
-        final static private String NEWLINE = "NEWLINE";
-        final static private String NEWMESSAGE = "NEWMESSAGE";
+        final static private String NEW_LINE = "NEW_LINE";
+        final static private String NEW_MESSAGE = "NEW_MESSAGE";
 
 
         private void addAction(SimpleObserver listener) {
             InputMap input = form.getInputMap();
             KeyStroke enter = KeyStroke.getKeyStroke("ENTER");
             KeyStroke shiftEnter = KeyStroke.getKeyStroke("ctrl ENTER");
-            input.put(shiftEnter, NEWLINE);
-            input.put(enter, NEWMESSAGE);
+            input.put(shiftEnter, NEW_LINE);
+            input.put(enter, NEW_MESSAGE);
 
             ActionMap actions = form.getActionMap();
-            actions.put(NEWMESSAGE, new AbstractAction() {
+            actions.put(NEW_MESSAGE, new AbstractAction() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     listener.update();
                 }
             });
-            actions.put(NEWLINE, new AbstractAction() {
+            actions.put(NEW_LINE, new AbstractAction() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     form.append("\n");
@@ -488,48 +513,21 @@ public class ClientGUI extends JFrame implements ClientInterface {
         }
 
         @Override
-        public void removeObserver(Observer observer) {
+        public void removeObserver(Observer<String> observer) {
             if (observers.contains(observer)) {
                 observers.remove(observer);
             }
         }
 
         @Override
-        public void addObserver(Observer observer) {
+        public void addObserver(Observer<String> observer) {
             observers.add(observer);
         }
 
         @Override
         public void notifyObservers() {
-            for (Observer observer : observers) {
+            for (Observer<String> observer : observers) {
                 observer.update(currentText);
-            }
-        }
-
-        void clearObservers() {
-            Iterator<Observer> iterator = observers.listIterator(0);
-            while (iterator.hasNext()) {
-                iterator.next();
-                iterator.remove();
-            }
-        }
-    }
-
-    private class LimitedQueue<E> extends ArrayBlockingQueue<E> {
-        LimitedQueue(int limit) {
-            super(limit);
-        }
-
-        final private Object lock = new Object();
-
-        E preemptiveAdd(E o) {
-            synchronized (lock) {
-                E out = null;
-                if (remainingCapacity() == 0) {
-                    out = super.remove();
-                }
-                super.add(o);
-                return out;
             }
         }
     }

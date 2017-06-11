@@ -3,22 +3,25 @@ package ru.nsu.ccfit.pleshkov.lab3.client;
 import ru.nsu.ccfit.pleshkov.lab3.*;
 import ru.nsu.ccfit.pleshkov.lab3.messages.*;
 
-import java.util.ArrayList;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.util.concurrent.atomic.AtomicInteger;
 
-class Client implements ServerMessagesProcessor {
+class Client implements ServerMessagesProcessor, Observer<Config> {
     final static private int TIMEOUT = 1000;
 
-    void setUnsetHandler(boolean unsetHandler) {
-        this.unsetHandler = unsetHandler;
-    }
+    final static private String XML_CLIENT_NAME = "pleshkov.xml-client";
+    final static private String OBJECTS_CLIENT_NAME = "pleshkov.objects-client";
 
-    private boolean unsetHandler = true;
+    volatile private boolean loggingOut = false;
+    volatile private boolean loggingIn = false;
+    volatile private boolean gettingList = false;
+    volatile private boolean messaging = false;
+    volatile private boolean connected = false;
+    volatile private boolean failedLogin = false;
 
-    Object getLock() {
-        return lock;
-    }
-
-    final private Object lock = new Object();
+    private AtomicInteger unhandledMessages = new AtomicInteger(0);
 
     ClientGUI getGui() {
         return gui;
@@ -35,25 +38,74 @@ class Client implements ServerMessagesProcessor {
     }
 
     void setHandler(ClientMessagesHandler handler) {
+        loggingIn = false;
+        loggingOut = false;
+        gettingList = false;
+        messaging = false;
         this.handler = handler;
     }
 
     private ClientMessagesHandler handler;
 
 
-    void addChatMessage(String message)  {
-        handler.addChatMessage(message);
+    @Override
+    public void update(Config config) {
+        if(failedLogin) {
+            addLoginMessage(config.getName());
+            failedLogin = false;
+            return;
+        }
+        try {
+            Socket socket = new Socket();
+            socket.connect(new InetSocketAddress(config.getAddress(),config.getPort()),1000);
+            if(config.getType().equals("xml")) {
+                setHandler(new ClientXMLMessagesHandler(socket, XML_CLIENT_NAME,this));
+            } else {
+                setHandler(new ClientObjectMessagesHandler(socket,OBJECTS_CLIENT_NAME,this));
+            }
+            getHandler().addMessageObserver(new MessageObserver<ServerMessage>() {
+                @Override
+                public void update(ServerMessage message) {
+                    message.process(Client.this);
+                }
+            });
+            begin(config);
+        } catch (IOException e) {
+            gui.connectionError();
+        }
     }
 
-    void addLoginMessage(String name)  {
-        handler.addLoginMessage(name);
+    void addChatMessage(String message)  {
+        unhandledMessages.getAndIncrement();
+        if(messaging) {
+            handler.addChatMessage(message);
+        }
+    }
+
+    void addLoginMessage(String name) {
+        if(!messaging && !loggingIn) {
+            loggingIn = true;
+            handler.addLoginMessage(name);
+        }
     }
 
     void addLogoutMessage()  {
-        handler.addLogoutMessage();
+        if(messaging) {
+            loggingOut = true;
+            handler.addLogoutMessage();
+        } else {
+            while (unhandledMessages.get() > 0) {
+                unhandledMessages.getAndDecrement();
+                gui.declineMessage();
+            }
+            gui.showLogout();
+            handler.endIt();
+            connected = false;
+        }
     }
 
     void addListMessage() {
+        gettingList = true;
         handler.addListMessage();
     }
 
@@ -61,51 +113,78 @@ class Client implements ServerMessagesProcessor {
         handler.endIt();
     }
 
-    void begin() {
-        handler.begin("Writer", "Reader",TIMEOUT);
+    void showFailedRead() {
+        if(connected) {
+            gui.showError("Garbage was read");
+        } else {
+            gui.showLoginError("Garbage was read");
+        }
     }
 
-    void waitEnd() {
-        synchronized (lock) {
-            try {
-                while (unsetHandler) {
-                    lock.wait();
-                }
-            } catch (InterruptedException e) {
-                return;
-            }
+
+    void begin(Config config) {
+        handler.begin("Writer", "Reader",TIMEOUT);
+        if(connected) {
+            gui.connectionEstablished();
+            addListMessage();
+        } else {
+            addLoginMessage(config.getName());
         }
-        handler.waitEnd();
-        unsetHandler = true;
+    }
+    
+    void handleUnknownMessage() {
+        gui.showError("Unknown type");
+    }
+
+    void showInterruption(String message) {
+        gui.showError(message);
+    }
+
+    void showConnectionBreak() {
+        if(connected) {
+            messaging = false;
+            gui.connectionBroken();
+        } else {
+            gui.connectionError();
+        }
     }
 
     @Override
     public void process(ServerChatMessage message) {
-        gui.showMessage(message.getMessage(),message.getName());
+        if(messaging) {
+            gui.showMessage(message.getMessage(),message.getName());
+        }
     }
 
     @Override
     public void process(ServerSuccessMessage message) {
-        gui.showSuccess();
+        if(loggingOut) {
+            loggingOut = false;
+            messaging = false;
+            gui.showLogout();
+            handler.endIt();
+            connected = false;
+        } else if (unhandledMessages.get() > 0) {
+            unhandledMessages.getAndDecrement();
+            gui.approveMessage();
+        }
     }
 
     @Override
     public void process(ServerSuccessListMessage message) {
-        ArrayList<User> list = message.getListusers();
-        StringBuilder builder = new StringBuilder();
-        for(User user : list) {
-            builder.append(user.getName());
-            builder.append("$");
-            builder.append(user.getType());
-            builder.append("\n");
-        }
-        gui.showList(builder.toString());
+        messaging = true;
+        gui.showList(message.getListusers());
     }
 
     @Override
     public void process(ServerSuccessLoginMessage message) {
-        handler.setSessionID(message.getSessionID());
-        gui.startMessages();
+        connected = true;
+        if(loggingIn) {
+            handler.setSessionID(message.getSessionID());
+            loggingIn = false;
+            messaging = true;
+            gui.startMessaging();
+        }
     }
 
     @Override
@@ -120,7 +199,27 @@ class Client implements ServerMessagesProcessor {
 
     @Override
     public void process(ServerErrorMessage errorMessage) {
-        gui.showError(errorMessage.getReason());
+        if (loggingIn) {
+            loggingIn = false;
+            failedLogin = true;
+            gui.showLoginError(errorMessage.getReason());
+            return;
+        }
+        if (loggingOut) {
+            loggingOut = false;
+            gui.showError(errorMessage.getReason());
+            return;
+        }
+        if (gettingList) {
+            gettingList = false;
+            gui.showError(errorMessage.getReason());
+            return;
+        }
+        if (unhandledMessages.get() > 0) {
+            unhandledMessages.getAndDecrement();
+            gui.declineMessage();
+            gui.showError(errorMessage.getReason());
+        }
     }
 
 }

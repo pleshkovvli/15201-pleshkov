@@ -1,7 +1,7 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
-public interface Observable {
-    void addObserver(Observer observer);
+public interface Observable<T> {
+    void addObserver(Observer<T> observer);
     void notifyObservers();
-    void removeObserver(Observer observer);
+    void removeObserver(Observer<T> observer);
 }

@@ -35,18 +35,22 @@ public class Server {
 	    Thread xml = new Thread(() -> {
             try(ServerSocket serverSocket = new ServerSocket(XML_PORT)) {
                 int i = 0;
+                serverSocket.setSoTimeout(TIMEOUT);
                 while(!Thread.interrupted()) {
-                    serverSocket.setSoTimeout(TIMEOUT);
                     Socket socket;
                     try {
                         socket = serverSocket.accept();
+                        ServerMessagesHandler handler = new ServerXMLMessagesHandler(socket);
+                        handler.begin("ServerXMLWriter#" + String.valueOf(i),
+                                "ServerXMLReader#" + String.valueOf(i),TIMEOUT);
+                        ++i;
                     } catch (SocketTimeoutException e) {
-                        continue;
+                        if(serverSocket.isClosed()) {
+                            break;
+                        }
+                    } catch (IOException e) {
+                        logger.warn(e.getMessage());
                     }
-                    ServerMessagesHandler handler = new ServerXMLMessagesHandler(socket);
-                    handler.begin("ServerXMLWriter#" + String.valueOf(i),
-                            "ServerXMLReader#" + String.valueOf(i),TIMEOUT);
-                    ++i;
                 }
             } catch (IOException e) {
                 logger.warn(e.getMessage());
@@ -61,13 +65,17 @@ public class Server {
                     Socket socket;
                     try {
                         socket = serverSocket.accept();
+                        ServerMessagesHandler handler = new ServerObjectMessagesHandler(socket);
+                        handler.begin("ServerObjectsWriter#" + String.valueOf(i),
+                                "ServerObjectsReader#" + String.valueOf(i),TIMEOUT);
+                        ++i;
                     } catch (SocketTimeoutException e) {
-                        continue;
+                        if(serverSocket.isClosed()) {
+                            break;
+                        }
+                    } catch (IOException e) {
+                        logger.warn(e.getMessage());
                     }
-                    ServerMessagesHandler handler = new ServerObjectMessagesHandler(socket);
-                    handler.begin("ServerObjectsWriter#" + String.valueOf(i),
-                            "ServerObjectsReader#" + String.valueOf(i),TIMEOUT);
-                    ++i;
                 }
             } catch (IOException e) {
                 logger.warn(e.getMessage());

@@ -3,10 +3,12 @@ package ru.nsu.ccfit.pleshkov.lab3.server;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import ru.nsu.ccfit.pleshkov.lab3.FailedReadException;
 import ru.nsu.ccfit.pleshkov.lab3.ServerMessagesProcessor;
+import ru.nsu.ccfit.pleshkov.lab3.UnknownMessageException;
 import ru.nsu.ccfit.pleshkov.lab3.User;
 import ru.nsu.ccfit.pleshkov.lab3.messages.*;
 
@@ -18,14 +20,12 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
+import java.net.SocketTimeoutException;
+import java.util.List;
 
 class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMessagesProcessor {
     private DataInputStream messagesReader;
     private DataOutputStream messagesWriter;
-
-    static private final int MAX_MESSAGE_SIZE = 10000;
-    private byte[] bytes = new byte[MAX_MESSAGE_SIZE];
     private DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
     ServerXMLMessagesHandler(Socket socket) throws IOException {
@@ -34,6 +34,7 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMe
         messagesWriter.flush();
         messagesReader = new DataInputStream(socket.getInputStream());
     }
+
 
     @Override
     protected void close() {
@@ -45,41 +46,58 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMe
         }
     }
 
+
+    private String getByName(Document document, String name) throws UnknownMessageException {
+        Node element = document.getElementsByTagName(name).item(0);
+        if(element == null) {
+            throw new UnknownMessageException("No " + name + "was found");
+        }
+        return element.getTextContent();
+    }
+
     @Override
-    protected ClientMessage readMessage() throws IOException, FailedReadException {
+    protected ClientMessage readMessage() throws IOException, FailedReadException, UnknownMessageException {
         ClientMessage message;
         try {
             DocumentBuilder builder = factory.newDocumentBuilder();
             int length = messagesReader.readInt();
-            if(length <= 0 || length > MAX_MESSAGE_SIZE) {
+            if(length <= 0) {
                 throw new FailedReadException();
             }
+            byte[] bytes = new byte[length];
             int read = 0;
             while (read < length) {
-                read += messagesReader.read(bytes,read,length - read);
+                try {
+                    int result = messagesReader.read(bytes,read,length - read);
+                    if(result < 0) {
+                        throw new FailedReadException();
+                    }
+                    read += result;
+                } catch (SocketTimeoutException e) {
+                    if(getSocket().isClosed())  {
+                        throw e;
+                    }
+                }
             }
             Document document = builder.parse(new InputSource(
                     new InputStreamReader(new ByteArrayInputStream(bytes,0,length),"UTF-8")));
             String type = document.getDocumentElement().getAttribute("name");
 
-            if(type.equals("message")) {
-                message =  new ClientChatMessage(document.getElementsByTagName("message").item(0).getTextContent(),
-                        Integer.valueOf(document.getElementsByTagName("session").item(0).getTextContent()));
-            } else
-            if(type.equals("list")) {
-                message =  new ClientListMessage(Integer.valueOf(document.getElementsByTagName("session").item(0).getTextContent()));
-            } else
-            if(type.equals("login")) {
-                message =  new ClientLoginMessage(document.getElementsByTagName("name").item(0).getTextContent(),
-                        document.getElementsByTagName("type").item(0).getTextContent());
-            } else
-            if(type.equals("logout")) {
-                message =  new ClientLogoutMessage(Integer.valueOf(document.getElementsByTagName("session").
-                        item(0).getTextContent()));
-            } else {
-                throw new FailedReadException("Unknown type");
+            switch (type) {
+                case "message": message = new ClientChatMessage(getByName(document,"message"),
+                        Integer.valueOf(getByName(document,"session"))); break;
+                case "list": message = new ClientListMessage(Integer.valueOf(getByName(document,"session"))); break;
+                case "login": message = new ClientLoginMessage(getByName(document,"name"), getByName(document,"type"));
+                    break;
+                case "logout": message =  new ClientLogoutMessage(Integer.valueOf(getByName(document,"session"))); break;
+                default: throw new FailedReadException("Unknown type");
             }
-        } catch (ParserConfigurationException | SAXException e) {
+        } catch (SAXException e) {
+            throw new UnknownMessageException(e.getMessage());
+        } catch (ParserConfigurationException e) {
+            throw new FailedReadException(e);
+        } catch (NullPointerException e) {
+            e.printStackTrace();
             throw new FailedReadException(e);
         }
         getLogger().info("Reading message " + message.getClass().getSimpleName());
@@ -160,7 +178,7 @@ class ServerXMLMessagesHandler extends ServerMessagesHandler implements ServerMe
         Element success = doc.createElement("success");
         doc.appendChild(success);
         Element listusers = doc.createElement("listusers");
-        ArrayList<User> list = message.getListusers();
+        List<User> list = message.getListusers();
         for (User user : list) {
             Element userElement = doc.createElement("user");
             Element name = doc.createElement("name");

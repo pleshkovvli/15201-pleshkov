@@ -9,6 +9,7 @@ import ru.nsu.ccfit.pleshkov.lab3.messages.*;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -50,7 +51,7 @@ implements ClientMessagesProcessor {
         logger = Logger.getLogger(Server.LOGGER_NAME);
     }
 
-    ServerMessagesHandler(Socket socket) {
+    ServerMessagesHandler(Socket socket)  throws SocketException {
         super(socket);
     }
 
@@ -60,6 +61,11 @@ implements ClientMessagesProcessor {
     }
 
     @Override
+    protected void handleFailedRead() {
+        logger.info("Garbage was read; closing connection");
+    }
+
+        @Override
     protected void handleConnectionBreak() {
         if(client != null && client.isOnline()) {
             logger.warn("Connection was broken");
@@ -106,23 +112,6 @@ implements ClientMessagesProcessor {
     @Override
     public void process(ClientChatMessage message) {
         synchronized (queuesLock) {
-            if(client == null) {
-                client = clients.get(message.getSessionID());
-                if(client == null) {
-                    ServerErrorMessage errorMessage = new ServerErrorMessage("You haven't logged in yet");
-                    logger.warn("Message without login error");
-                    queue.add(errorMessage);
-                    return;
-                }
-                ServerUserloginMessage response = new ServerUserloginMessage(client.getName(),client.getType());
-                for(ClientInfo client : clients.values()) {
-                    if((client.getHandler() != this) && client.isOnline()) {
-                        client.getHandler().queue.add(response);
-                    }
-                }
-                client.setOnline(true);
-            }
-
             try {
                 queue.put(new ServerSuccessMessage());
             } catch (InterruptedException e) {
@@ -178,6 +167,12 @@ implements ClientMessagesProcessor {
         logger.info("Handled with login message " + message.getUserName() + " via " + message.getClientName());
     }
 
+
+    @Override
+    protected void handleUnknownMessage() {
+        queue.add(new ServerErrorMessage("Unknown type"));
+    }
+
     @Override
     public void process(ClientLogoutMessage message) {
         String name;
@@ -226,6 +221,22 @@ implements ClientMessagesProcessor {
     @Override
     public void process(ClientListMessage message) {
         synchronized (queuesLock) {
+            if(client == null) {
+                client = clients.get(message.getSessionID());
+                if(client == null) {
+                    ServerErrorMessage errorMessage = new ServerErrorMessage("You haven't logged in yet");
+                    logger.warn("Message without login error");
+                    queue.add(errorMessage);
+                    return;
+                }
+                ServerUserloginMessage response = new ServerUserloginMessage(client.getName(),client.getType());
+                for(ClientInfo client : clients.values()) {
+                    if((client.getHandler() != this) && client.isOnline()) {
+                        client.getHandler().queue.add(response);
+                    }
+                }
+                client.setOnline(true);
+            }
             ArrayList<User> listusers = new ArrayList<>();
             for(ClientInfo client : clients.values()) {
                 if(client.isOnline()) {

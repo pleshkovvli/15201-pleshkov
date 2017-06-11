@@ -1,5 +1,5 @@
 package ru.nsu.ccfit.pleshkov.lab3;
 
-public interface Observer {
-    void update(String message);
+public interface Observer<T> {
+    void update(T message);
 }

@@ -15,11 +15,18 @@ class Config {
         return type;
     }
 
-    Config(int port, InetAddress address, String type) {
+    Config(String name,int port, InetAddress address, String type) {
         this.port = port;
         this.address = address;
         this.type = type;
+        this.name = name;
     }
+
+    public String getName() {
+        return name;
+    }
+
+    final private String name;
 
     final private int port;
     final private InetAddress address;

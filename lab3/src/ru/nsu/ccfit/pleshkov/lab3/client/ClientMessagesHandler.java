@@ -53,8 +53,14 @@ implements MessageObservable<ServerMessage> {
         try {
             queue.put(new ClientChatMessage(message,sessionID));
         } catch (InterruptedException e) {
-
+            client.showInterruption("Failed to put message in queue");
         }
+    }
+
+
+    @Override
+    protected void handleUnknownMessage() {
+        client.handleUnknownMessage();
     }
 
     void addLoginMessage(String name)  {
@@ -62,12 +68,16 @@ implements MessageObservable<ServerMessage> {
     }
 
     void addLogoutMessage()  {
-
         try {
             queue.put(new ClientLogoutMessage(sessionID));
         } catch (InterruptedException e) {
-
+            client.showInterruption("Failed to put logout request in queue");
         }
+    }
+
+    @Override
+    protected void handleFailedRead() {
+        client.showFailedRead();
     }
 
     void addListMessage() {
@@ -76,22 +86,9 @@ implements MessageObservable<ServerMessage> {
 
     @Override
     protected void handleConnectionBreak() {
-
+        client.showConnectionBreak();
     }
 
-    void waitEnd() {
-        try {
-            getReader().join();
-        } catch (InterruptedException e) {
-
-        }
-        try {
-            getWriter().join();
-        } catch (InterruptedException e) {
-
-        }
-        close();
-    }
 
     @Override
     protected void handleInterruption() {
@@ -100,10 +97,7 @@ implements MessageObservable<ServerMessage> {
 
     @Override
     protected void fin() {
-        synchronized (client.getLock()) {
-            client.setUnsetHandler(false);
-            client.getLock().notifyAll();
-        }
+
     }
 
     @Override

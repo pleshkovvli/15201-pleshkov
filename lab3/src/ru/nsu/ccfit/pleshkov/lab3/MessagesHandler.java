@@ -8,6 +8,10 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 
 public abstract class MessagesHandler<IN extends Message, OUT extends Message> {
+    protected Socket getSocket() {
+        return socket;
+    }
+
     private Socket socket;
 
     public void endIt() {
@@ -16,27 +20,21 @@ public abstract class MessagesHandler<IN extends Message, OUT extends Message> {
     }
 
     private Thread writer;
-
-    protected Thread getWriter() {
-        return writer;
-    }
-
-    protected Thread getReader() {
-        return reader;
-    }
-
     private Thread reader;
 
-    public MessagesHandler(Socket socket) {
+    public MessagesHandler(Socket socket) throws SocketException {
         this.socket = socket;
+        socket.setSoTimeout(1000);
     }
 
-    abstract protected IN readMessage() throws IOException, InterruptedException, FailedReadException;
+    abstract protected IN readMessage() throws IOException, InterruptedException, FailedReadException, UnknownMessageException;
     abstract protected OUT getMessage() throws IOException, InterruptedException;
     abstract protected void writeMessage(OUT message) throws IOException, InterruptedException;
     abstract protected void handleMessage(IN message) throws IOException, InterruptedException;
+    abstract protected void handleUnknownMessage();
     abstract protected void handleConnectionBreak();
     abstract protected void handleInterruption();
+    abstract protected void handleFailedRead();
     abstract protected void endReading();
     abstract protected void endWriting();
     abstract protected void fin();
@@ -68,6 +66,8 @@ public abstract class MessagesHandler<IN extends Message, OUT extends Message> {
                 while (!Thread.interrupted()) {
                     try {
                         handleMessage(readMessage());
+                    } catch (UnknownMessageException e) {
+                        handleUnknownMessage();
                     } catch (SocketTimeoutException e) {
                         if (socket.isClosed()) {
                             break;
@@ -75,7 +75,7 @@ public abstract class MessagesHandler<IN extends Message, OUT extends Message> {
                     }
                 }
             } catch (FailedReadException e) {
-                e.printStackTrace();
+                handleFailedRead();
             } catch (IOException e) {
                 handleConnectionBreak();
             }  catch (InterruptedException e) {

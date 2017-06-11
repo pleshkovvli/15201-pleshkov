@@ -17,12 +17,11 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 
 class ClientXMLMessagesHandler extends ClientMessagesHandler implements ClientMessagesProcessor {
-
-    static private final int MAX_MESSAGE_SIZE = 10000;
-    private byte[] bytes = new byte[MAX_MESSAGE_SIZE];
 
     private DataInputStream messagesReader;
     private DataOutputStream messagesWriter;
@@ -56,68 +55,97 @@ class ClientXMLMessagesHandler extends ClientMessagesHandler implements ClientMe
         }
     }
 
+    private String getByName(Document document, String name) throws UnknownMessageException {
+        Node element = document.getElementsByTagName(name).item(0);
+        if(element == null) {
+            throw new UnknownMessageException("No " + name + "was found");
+        }
+        return element.getTextContent();
+    }
+
+    private String getByName(Element mainElement, String name) throws UnknownMessageException {
+        Node element = mainElement.getElementsByTagName(name).item(0);
+        if(element == null) {
+            throw new UnknownMessageException("No " + name + "was found");
+        }
+        return element.getTextContent();
+    }
+
     @Override
-    protected ServerMessage readMessage() throws IOException, FailedReadException {
+    protected ServerMessage readMessage() throws IOException, FailedReadException, UnknownMessageException {
         try {
             DocumentBuilder builder = factory.newDocumentBuilder();
             int length = messagesReader.readInt();
-            if(length <= 0 || length > MAX_MESSAGE_SIZE) {
+            if(length <= 0) {
                 throw new FailedReadException();
             }
+            byte[] bytes = new byte[length];
             int read = 0;
             while (read < length) {
-                read += messagesReader.read(bytes,read,length - read);
+                try {
+                    int result = messagesReader.read(bytes,read,length - read);
+                    if(result < 0) {
+                        throw new FailedReadException();
+                    }
+                    read += result;
+                } catch (SocketTimeoutException e) {
+                    if(getSocket().isClosed())  {
+                        throw e;
+                    }
+                }
             }
             Document document = builder.parse(new InputSource(
                     new InputStreamReader(new ByteArrayInputStream(bytes,0,length),"UTF-8")));
             String type = document.getDocumentElement().getTagName();
+            //String me = new String(bytes,0,length,"UTF-8");
+            //System.out.println(me);
             if(type.equals("error")) {
-                return new ServerErrorMessage(document.getElementsByTagName("message").item(0).getTextContent());
+                return new ServerErrorMessage(getByName(document,"message"));
             }
             if(type.equals("event")) {
                 String event = document.getDocumentElement().getAttribute("name");
                 if(event.equals("message")) {
-                    return new ServerChatMessage(document.getElementsByTagName("message").item(0).getTextContent(),
-                            document.getElementsByTagName("name").item(0).getTextContent());
+                    return new ServerChatMessage(getByName(document,"message"), getByName(document,"name"));
                 }
                 if(event.equals("userlogin")) {
                     String clientType;
-                    Node te = document.getElementsByTagName("type").item(0);
-                    if(te == null) {
+                    Node typeNode = document.getElementsByTagName("type").item(0);
+                    if(typeNode == null) {
                         clientType = "unknown";
                     } else {
-                        clientType = te.getTextContent();
+                        clientType = typeNode.getTextContent();
                     }
-                    return new ServerUserloginMessage(document.getElementsByTagName("name").item(0).getTextContent(),
-                            clientType);
+                    return new ServerUserloginMessage(getByName(document,"name"), clientType);
                 }
                 if(event.equals("userlogout")) {
-                    return new ServerUserlogoutMessage(document.getElementsByTagName("name").item(0).getTextContent());
+                    return new ServerUserlogoutMessage(getByName(document,"name"));
                 }
             }
             if(type.equals("success")) {
                 NodeList list = document.getElementsByTagName("user");
                 if(list.getLength() == 0) {
-                    list = document.getElementsByTagName("session");
-                    if(list.getLength() > 0) {
-                        return new ServerSuccessLoginMessage(Integer.valueOf(list.item(0).getTextContent()));
+                    Node session = document.getElementsByTagName("session").item(0);
+                    if(session != null) {
+                        return new ServerSuccessLoginMessage(Integer.valueOf(session.getTextContent()));
                     }
                     return new ServerSuccessMessage();
                 }
                 ArrayList<User> listusers = new ArrayList<>();
                 for(int i = 0; i < list.getLength(); i++) {
                     Element user = (Element) list.item(i);
-                    listusers.add(new User(user.getElementsByTagName("name").item(0).getTextContent(),
-                            user.getElementsByTagName("type").item(0).getTextContent()));
+                    listusers.add(new User(getByName(user,"name"),getByName(user,"type")));
                 }
                 return new ServerSuccessListMessage(listusers);
             }
-        } catch (ParserConfigurationException | SAXException e) {
+            throw new UnknownMessageException(type);
+        } catch (SAXException e) {
+            throw new UnknownMessageException(e.getMessage());
+        } catch (ParserConfigurationException e) {
             throw new FailedReadException(e);
         } catch (NullPointerException e) {
             e.printStackTrace();
+            throw new FailedReadException(e);
         }
-        throw new FailedReadException();
     }
 
     private Document doc;
@@ -186,17 +214,17 @@ class ClientXMLMessagesHandler extends ClientMessagesHandler implements ClientMe
         }
         doc = builder.newDocument();
         message.process(this);
-        ByteArrayOutputStream ba = new ByteArrayOutputStream();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try {
             TransformerFactory tf = TransformerFactory.newInstance();
             Transformer transformer = tf.newTransformer();
             transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
             transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            transformer.transform(new DOMSource(doc), new StreamResult(ba));
+            transformer.transform(new DOMSource(doc), new StreamResult(byteArrayOutputStream));
         }  catch (TransformerException e) {
             e.printStackTrace();
         }
-        messagesWriter.writeInt(ba.size());
-        messagesWriter.write(ba.toByteArray());
+        messagesWriter.writeInt(byteArrayOutputStream.size());
+        messagesWriter.write(byteArrayOutputStream.toByteArray());
     }
 }
