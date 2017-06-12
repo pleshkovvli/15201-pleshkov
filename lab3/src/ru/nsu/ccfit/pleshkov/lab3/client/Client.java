@@ -22,6 +22,8 @@ class Client implements ServerMessagesProcessor, Observer<Config> {
     volatile private boolean connected = false;
     volatile private boolean failedLogin = false;
 
+    private int sessionID;
+
     private AtomicInteger unhandledMessages = new AtomicInteger(0);
 
     void setGui(ClientGUI gui) {
@@ -127,6 +129,7 @@ class Client implements ServerMessagesProcessor, Observer<Config> {
     private void begin(Config config) {
         handler.begin("Writer", "Reader");
         if(connected) {
+            handler.setSessionID(sessionID);
             gui.connectionEstablished();
             addListMessage();
         } else {
@@ -182,7 +185,8 @@ class Client implements ServerMessagesProcessor, Observer<Config> {
     public void process(ServerSuccessLoginMessage message) {
         connected = true;
         if(loggingIn) {
-            handler.setSessionID(message.getSessionID());
+            sessionID = message.getSessionID();
+            handler.setSessionID(sessionID);
             loggingIn = false;
             messaging = true;
             gui.startMessaging();
