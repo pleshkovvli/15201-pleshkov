@@ -131,11 +131,38 @@ implements ClientMessagesProcessor {
         return message;
     }
 
+    private void checkID(int id) throws WrongSessionIDException {
+        if(client == null) {
+            client = clients.get(id);
+            if(client == null) {
+                ServerErrorMessage errorMessage = new ServerErrorMessage("You haven't logged in yet");
+                logger.warn("Message without login error");
+                queue.add(errorMessage);
+                throw new WrongSessionIDException();
+            }
+            ServerUserloginMessage response = new ServerUserloginMessage(client.getName(),client.getType());
+            for(ClientInfo client : clients.values()) {
+                if((client.getHandler() != this) && client.isOnline()) {
+                    client.getHandler().queue.add(response);
+                }
+            }
+            client.setOnline(true);
+        } else if(client.getSessionID() != id) {
+            ServerErrorMessage errorMessage = new ServerErrorMessage("Wrong session ID");
+            logger.warn("Wrong session ID error");
+            queue.add(errorMessage);
+            throw new WrongSessionIDException();
+        }
+    }
+
     @Override
     public void process(ClientChatMessage message) {
         synchronized (queuesLock) {
             try {
+                checkID(message.getSessionID());
                 queue.put(new ServerSuccessMessage());
+            } catch (WrongSessionIDException e) {
+                return;
             } catch (InterruptedException e) {
                 logger.warn("Thread was interrupted");
             }
@@ -225,7 +252,7 @@ implements ClientMessagesProcessor {
             } else {
                 try {
                     queue.put(new ServerErrorMessage("You haven't logged in yet"));
-                }   catch (InterruptedException e) {
+                } catch (InterruptedException e) {
                     logger.warn("Thread was interrupted");
                 }
                 logger.warn("Logout request without login");
@@ -254,21 +281,10 @@ implements ClientMessagesProcessor {
     @Override
     public void process(ClientListMessage message) {
         synchronized (queuesLock) {
-            if(client == null) {
-                client = clients.get(message.getSessionID());
-                if(client == null) {
-                    ServerErrorMessage errorMessage = new ServerErrorMessage("You haven't logged in yet");
-                    logger.warn("Message without login error");
-                    queue.add(errorMessage);
-                    return;
-                }
-                ServerUserloginMessage response = new ServerUserloginMessage(client.getName(),client.getType());
-                for(ClientInfo client : clients.values()) {
-                    if((client.getHandler() != this) && client.isOnline()) {
-                        client.getHandler().queue.add(response);
-                    }
-                }
-                client.setOnline(true);
+            try {
+                checkID(message.getSessionID());
+            } catch (WrongSessionIDException e) {
+                return;
             }
             ArrayList<User> listusers = new ArrayList<>();
             for(ClientInfo client : clients.values()) {

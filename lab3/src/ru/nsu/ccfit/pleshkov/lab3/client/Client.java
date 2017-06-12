@@ -30,7 +30,7 @@ class Client implements ServerMessagesProcessor, Observer<Config> {
         this.gui = gui;
     }
 
-        private ClientInterface gui;
+    private ClientInterface gui;
 
     ClientMessagesHandler getHandler() {
         return handler;
