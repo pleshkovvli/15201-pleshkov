@@ -35,13 +35,13 @@
             <compilerarg line="" />
         </javac>
         <javac srcdir="${srctest.dir}" classpathref="classpath.test" destdir="${tests.dir}"/>
-        <jar destfile="Client.jar" basedir="${classes.dir}">
+        <jar destfile="Client.jar" basedir="${classes.dir}" excludes="**/server/*">
             <zipgroupfileset dir="${lib.dir}" includes="*.jar" />
             <manifest>
                 <attribute name="Main-Class" value="ru.nsu.ccfit.pleshkov.lab3.client.ClientMain"/>
             </manifest>
         </jar>
-        <jar destfile="Server.jar" basedir="${classes.dir}">
+        <jar destfile="Server.jar" basedir="${classes.dir}"  excludes="**/client/*">
             <zipgroupfileset dir="${lib.dir}" includes="*.jar" />
             <manifest>
                 <attribute name="Main-Class" value="ru.nsu.ccfit.pleshkov.lab3.server.Server"/>

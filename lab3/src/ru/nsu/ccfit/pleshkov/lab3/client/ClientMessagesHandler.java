@@ -1,6 +1,8 @@
 package ru.nsu.ccfit.pleshkov.lab3.client;
 
-import ru.nsu.ccfit.pleshkov.lab3.*;
+import ru.nsu.ccfit.pleshkov.lab3.base.MessageObservable;
+import ru.nsu.ccfit.pleshkov.lab3.base.MessageObserver;
+import ru.nsu.ccfit.pleshkov.lab3.base.MessagesHandler;
 import ru.nsu.ccfit.pleshkov.lab3.messages.*;
 
 import java.io.*;

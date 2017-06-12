@@ -1,6 +1,6 @@
 package ru.nsu.ccfit.pleshkov.lab3.server;
 
-import ru.nsu.ccfit.pleshkov.lab3.FailedReadException;
+import ru.nsu.ccfit.pleshkov.lab3.base.FailedReadException;
 import ru.nsu.ccfit.pleshkov.lab3.messages.ClientMessage;
 import ru.nsu.ccfit.pleshkov.lab3.messages.ServerMessage;
 

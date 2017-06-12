@@ -1,4 +1,4 @@
-package ru.nsu.ccfit.pleshkov.lab3;
+package ru.nsu.ccfit.pleshkov.lab3.base;
 
 import ru.nsu.ccfit.pleshkov.lab3.messages.ClientChatMessage;
 import ru.nsu.ccfit.pleshkov.lab3.messages.ClientListMessage;

@@ -1,7 +1,6 @@
 package ru.nsu.ccfit.pleshkov.lab3.messages;
 
-import ru.nsu.ccfit.pleshkov.lab3.ServerMessagesProcessor;
-import ru.nsu.ccfit.pleshkov.lab3.messages.ServerMessage;
+import ru.nsu.ccfit.pleshkov.lab3.base.ServerMessagesProcessor;
 
 public class ServerErrorMessage implements ServerMessage {
     public ServerErrorMessage(String reason) {

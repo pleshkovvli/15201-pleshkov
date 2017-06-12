@@ -3,7 +3,10 @@ package ru.nsu.ccfit.pleshkov.lab3.client;
 import org.w3c.dom.*;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import ru.nsu.ccfit.pleshkov.lab3.*;
+import ru.nsu.ccfit.pleshkov.lab3.base.ClientMessagesProcessor;
+import ru.nsu.ccfit.pleshkov.lab3.base.FailedReadException;
+import ru.nsu.ccfit.pleshkov.lab3.base.UnknownMessageException;
+import ru.nsu.ccfit.pleshkov.lab3.base.User;
 import ru.nsu.ccfit.pleshkov.lab3.messages.*;
 
 import javax.xml.parsers.DocumentBuilder;

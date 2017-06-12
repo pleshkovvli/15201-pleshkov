@@ -1,6 +1,8 @@
 package ru.nsu.ccfit.pleshkov.lab3.client;
 
-import ru.nsu.ccfit.pleshkov.lab3.*;
+import ru.nsu.ccfit.pleshkov.lab3.base.MessageObserver;
+import ru.nsu.ccfit.pleshkov.lab3.base.Observer;
+import ru.nsu.ccfit.pleshkov.lab3.base.ServerMessagesProcessor;
 import ru.nsu.ccfit.pleshkov.lab3.messages.*;
 
 import java.io.IOException;
@@ -108,7 +110,9 @@ class Client implements ServerMessagesProcessor, Observer<Config> {
     }
 
     void endIt() {
-        handler.endIt();
+        if(handler != null) {
+            handler.endIt();
+        }
     }
 
     void showFailedRead() {

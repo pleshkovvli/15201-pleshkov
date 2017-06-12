@@ -2,9 +2,9 @@ package ru.nsu.ccfit.pleshkov.lab3.server;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
-import ru.nsu.ccfit.pleshkov.lab3.ClientMessagesProcessor;
-import ru.nsu.ccfit.pleshkov.lab3.MessagesHandler;
-import ru.nsu.ccfit.pleshkov.lab3.User;
+import ru.nsu.ccfit.pleshkov.lab3.base.ClientMessagesProcessor;
+import ru.nsu.ccfit.pleshkov.lab3.base.MessagesHandler;
+import ru.nsu.ccfit.pleshkov.lab3.base.User;
 import ru.nsu.ccfit.pleshkov.lab3.messages.*;
 
 import java.io.IOException;

@@ -2,10 +2,9 @@ package ru.nsu.ccfit.pleshkov.lab3.client;
 
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.uiDesigner.core.Spacer;
-import ru.nsu.ccfit.pleshkov.lab3.Observable;
-import ru.nsu.ccfit.pleshkov.lab3.Observer;
-import ru.nsu.ccfit.pleshkov.lab3.SimpleObserver;
+import ru.nsu.ccfit.pleshkov.lab3.base.Observable;
+import ru.nsu.ccfit.pleshkov.lab3.base.Observer;
+import ru.nsu.ccfit.pleshkov.lab3.base.SimpleObserver;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;

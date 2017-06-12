@@ -3,7 +3,7 @@ package ru.nsu.ccfit.pleshkov.lab3.client;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
-import ru.nsu.ccfit.pleshkov.lab3.*;
+import ru.nsu.ccfit.pleshkov.lab3.base.*;
 
 import javax.swing.*;
 import javax.swing.text.*;

@@ -1,6 +1,6 @@
 package ru.nsu.ccfit.pleshkov.lab3.messages;
 
-import ru.nsu.ccfit.pleshkov.lab3.ServerMessagesProcessor;
+import ru.nsu.ccfit.pleshkov.lab3.base.ServerMessagesProcessor;
 
 public class ServerChatMessage implements ServerMessage {
     final private String message;

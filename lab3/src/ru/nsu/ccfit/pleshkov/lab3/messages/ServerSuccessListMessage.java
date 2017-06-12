@@ -1,7 +1,7 @@
 package ru.nsu.ccfit.pleshkov.lab3.messages;
 
-import ru.nsu.ccfit.pleshkov.lab3.ServerMessagesProcessor;
-import ru.nsu.ccfit.pleshkov.lab3.User;
+import ru.nsu.ccfit.pleshkov.lab3.base.ServerMessagesProcessor;
+import ru.nsu.ccfit.pleshkov.lab3.base.User;
 
 import java.util.ArrayList;
 import java.util.List;

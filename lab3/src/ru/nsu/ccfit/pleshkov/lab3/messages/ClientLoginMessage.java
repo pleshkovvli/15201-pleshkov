@@ -1,6 +1,6 @@
 package ru.nsu.ccfit.pleshkov.lab3.messages;
 
-import ru.nsu.ccfit.pleshkov.lab3.ClientMessagesProcessor;
+import ru.nsu.ccfit.pleshkov.lab3.base.ClientMessagesProcessor;
 
 public class ClientLoginMessage implements ClientMessage {
     public ClientLoginMessage(String userName, String clientName) {

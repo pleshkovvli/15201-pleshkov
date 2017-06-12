@@ -1,6 +1,6 @@
 package ru.nsu.ccfit.pleshkov.lab3.client;
 
-import ru.nsu.ccfit.pleshkov.lab3.UserElement;
+import ru.nsu.ccfit.pleshkov.lab3.base.UserElement;
 
 import java.util.List;
 

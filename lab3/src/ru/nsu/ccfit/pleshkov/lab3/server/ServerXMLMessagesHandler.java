@@ -6,10 +6,10 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import ru.nsu.ccfit.pleshkov.lab3.FailedReadException;
-import ru.nsu.ccfit.pleshkov.lab3.ServerMessagesProcessor;
-import ru.nsu.ccfit.pleshkov.lab3.UnknownMessageException;
-import ru.nsu.ccfit.pleshkov.lab3.User;
+import ru.nsu.ccfit.pleshkov.lab3.base.FailedReadException;
+import ru.nsu.ccfit.pleshkov.lab3.base.ServerMessagesProcessor;
+import ru.nsu.ccfit.pleshkov.lab3.base.UnknownMessageException;
+import ru.nsu.ccfit.pleshkov.lab3.base.User;
 import ru.nsu.ccfit.pleshkov.lab3.messages.*;
 
 import javax.xml.parsers.DocumentBuilder;
