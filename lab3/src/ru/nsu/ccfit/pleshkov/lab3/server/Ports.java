@@ -5,7 +5,7 @@ class Ports {
         return xml;
     }
 
-    public int getObjects() {
+    int getObjects() {
         return objects;
     }
 

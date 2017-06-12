@@ -46,19 +46,19 @@ public class ClientGUI extends JFrame implements ClientInterface {
         messagesHistory = new Messages(previousMessagesText);
         connectedUsers = new Userlist(userListText);
         messageForm.addObserver((String message) -> SwingUtilities.invokeLater(() -> messagesObserver.update(message)));
-        dialog = new LoginDialog(() -> {
+        dialog = new LoginDialog(() -> SwingUtilities.invokeLater(() -> {
             fin.update();
             this.dispose();
-        });
+        }));
         dialog.addObserver((Config config) -> SwingUtilities.invokeLater(() -> {
             login = config;
             start.update(config);
         }));
         reconnect = new ClickButton(reconnectButton);
-        reconnect.addSimpleObserver(() -> start.update(login));
+        reconnect.addSimpleObserver(() -> SwingUtilities.invokeLater(() -> start.update(login)));
         reconnectButton.setText("Reconnect");
         reconnectButton.setVisible(false);
-        logoutClick.addSimpleObserver(logoutObserver);
+        logoutClick.addSimpleObserver(() -> SwingUtilities.invokeLater(logoutObserver::update));
         this.listObserver = listObserver;
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
@@ -68,14 +68,16 @@ public class ClientGUI extends JFrame implements ClientInterface {
         });
     }
 
-    void forceLogin(Config config) {
+    @Override
+    public void forceLogin(Config config) {
         dialog.forceLogin(config);
     }
 
-    void startMessaging() {
+    @Override
+    public void startMessaging() {
         dialog.setVisible(false);
         messagesHistory.clearText();
-        listObserver.update();
+        SwingUtilities.invokeLater(listObserver::update);
         setTitle(WINDOW_NAME + ": " + login.getName());
         this.setVisible(true);
     }
@@ -419,23 +421,22 @@ public class ClientGUI extends JFrame implements ClientInterface {
     }
 
     @Override
-    public void showSuccess() {
-
-    }
-
-    void approveMessage() {
+    public void approveMessage() {
         messagesHistory.approveMessage();
     }
 
-    void declineMessage() {
+    @Override
+    public void declineMessage() {
         messagesHistory.declineMessage();
     }
 
-    void showLoginError(String message) {
+    @Override
+    public void showLoginError(String message) {
         dialog.showError(message);
     }
 
-    void showLogout() {
+    @Override
+    public void showLogout() {
         this.setVisible(false);
         dialog.setVisible(true);
     }
@@ -450,16 +451,19 @@ public class ClientGUI extends JFrame implements ClientInterface {
         messagesHistory.printError(error);
     }
 
-    void connectionError() {
+    @Override
+    public void connectionError() {
         new ErrorDialog("Failed to connect with server");
     }
 
-    void connectionBroken() {
+    @Override
+    public void connectionBroken() {
         showError("Connection broken");
         reconnectButton.setVisible(true);
     }
 
-    void connectionEstablished() {
+    @Override
+    public void connectionEstablished() {
         reconnectButton.setVisible(false);
     }
 

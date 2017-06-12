@@ -26,11 +26,11 @@ class Client implements ServerMessagesProcessor, Observer<Config> {
 
     private AtomicInteger unhandledMessages = new AtomicInteger(0);
 
-    void setGui(ClientGUI gui) {
+    void setGui(ClientInterface gui) {
         this.gui = gui;
     }
 
-    private ClientGUI gui;
+        private ClientInterface gui;
 
     ClientMessagesHandler getHandler() {
         return handler;
