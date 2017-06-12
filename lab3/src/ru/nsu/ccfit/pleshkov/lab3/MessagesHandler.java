@@ -17,6 +17,7 @@ public abstract class MessagesHandler<IN extends Message, OUT extends Message> {
     public void endIt() {
         reader.interrupt();
         writer.interrupt();
+        close();
     }
 
     private Thread writer;

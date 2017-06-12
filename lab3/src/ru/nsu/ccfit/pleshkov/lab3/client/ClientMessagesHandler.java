@@ -58,12 +58,6 @@ implements MessageObservable<ServerMessage> {
     }
 
     @Override
-    public void endIt() {
-        super.endIt();
-        close();
-    }
-
-        @Override
     protected void handleUnknownMessage() {
         client.handleUnknownMessage();
     }

@@ -56,6 +56,7 @@ public class ClientGUI extends JFrame implements ClientInterface {
         }));
         reconnect = new ClickButton(reconnectButton);
         reconnect.addSimpleObserver(() -> start.update(login));
+        reconnectButton.setText("Reconnect");
         reconnectButton.setVisible(false);
         logoutClick.addSimpleObserver(logoutObserver);
         this.listObserver = listObserver;
@@ -67,8 +68,8 @@ public class ClientGUI extends JFrame implements ClientInterface {
         });
     }
 
-    void forceLogin(String name) {
-        dialog.forceLogin(name);
+    void forceLogin(Config config) {
+        dialog.forceLogin(config);
     }
 
     void startMessaging() {

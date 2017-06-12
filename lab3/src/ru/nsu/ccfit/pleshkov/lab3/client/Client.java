@@ -9,7 +9,6 @@ import java.net.Socket;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class Client implements ServerMessagesProcessor, Observer<Config> {
-    final static private int TIMEOUT = 1000;
 
     final static private String XML_CLIENT_NAME = "pleshkov.xml-client";
     final static private String OBJECTS_CLIENT_NAME = "pleshkov.objects-client";
@@ -22,10 +21,6 @@ class Client implements ServerMessagesProcessor, Observer<Config> {
     volatile private boolean failedLogin = false;
 
     private AtomicInteger unhandledMessages = new AtomicInteger(0);
-
-    ClientGUI getGui() {
-        return gui;
-    }
 
     void setGui(ClientGUI gui) {
         this.gui = gui;
@@ -47,6 +42,9 @@ class Client implements ServerMessagesProcessor, Observer<Config> {
 
     private ClientMessagesHandler handler;
 
+    void forceLogin(Config config) {
+        gui.forceLogin(config);
+    }
 
     @Override
     public void update(Config config) {
@@ -82,7 +80,7 @@ class Client implements ServerMessagesProcessor, Observer<Config> {
         }
     }
 
-    void addLoginMessage(String name) {
+    private void addLoginMessage(String name) {
         if(!messaging && !loggingIn) {
             loggingIn = true;
             handler.addLoginMessage(name);
@@ -122,7 +120,7 @@ class Client implements ServerMessagesProcessor, Observer<Config> {
     }
 
 
-    void begin(Config config) {
+    private void begin(Config config) {
         handler.begin("Writer", "Reader");
         if(connected) {
             gui.connectionEstablished();

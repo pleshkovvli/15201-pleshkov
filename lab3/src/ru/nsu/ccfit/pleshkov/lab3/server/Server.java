@@ -11,8 +11,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 public class Server {
-    final private static int XML_PORT = 2000;
-    final private static int OBJECTS_PORT = 3000;
     final static String LOGGER_NAME = "Server";
     final static private int TIMEOUT = 1500;
 
@@ -32,8 +30,19 @@ public class Server {
     }
 
     public static void main(String[] args) {
+        final Ports ports;
+        if(args.length > 0) {
+            try {
+                ports = ServerConfigParser.parse(args[0]);
+            } catch (BadParsingException e) {
+                logger.warn("Failed to parse config; exiting");
+                return;
+            }
+        } else {
+            ports = new Ports(2000,3000);
+        }
 	    Thread xml = new Thread(() -> {
-            try(ServerSocket serverSocket = new ServerSocket(XML_PORT)) {
+            try(ServerSocket serverSocket = new ServerSocket(ports.getXml())) {
                 int i = 0;
                 serverSocket.setSoTimeout(TIMEOUT);
                 while(!Thread.interrupted()) {
@@ -57,8 +66,9 @@ public class Server {
             }
         });
         xml.start();
+        logger.info("Started XML on " + ports.getXml());
         Thread objects = new Thread(() -> {
-            try(ServerSocket serverSocket = new ServerSocket(OBJECTS_PORT)) {
+            try(ServerSocket serverSocket = new ServerSocket(ports.getObjects())) {
                 serverSocket.setSoTimeout(TIMEOUT);
                 int i = 0;
                 while(!Thread.interrupted()) {
@@ -82,6 +92,7 @@ public class Server {
             }
         });
         objects.start();
+        logger.info("Started objects on " + ports.getObjects());
         new Thread(() -> {
             try(BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
                 while(true) {
@@ -99,5 +110,6 @@ public class Server {
                 logger.warn(e.getMessage());
             }
         }).start();
+        logger.info("Started finishing thread; enter \"exit\" to finish");
     }
 }

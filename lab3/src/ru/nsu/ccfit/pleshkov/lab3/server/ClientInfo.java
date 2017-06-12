@@ -10,6 +10,12 @@ class ClientInfo {
     private String type;
     private ServerMessagesHandler handler;
 
+    int getSessionID() {
+        return sessionID;
+    }
+
+    private int sessionID;
+
     private boolean isOnline;
 
     boolean isOnline() {
@@ -28,9 +34,10 @@ class ClientInfo {
         return handler;
     }
 
-    ClientInfo(String name, String type, ServerMessagesHandler handler) {
+    ClientInfo(String name, String type, ServerMessagesHandler handler, int sessionID) {
         this.name = name;
         this.type = type;
         this.handler = handler;
+        this.sessionID = sessionID;
     }
 }

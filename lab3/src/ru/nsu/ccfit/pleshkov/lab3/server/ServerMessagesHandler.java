@@ -15,15 +15,17 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 abstract class ServerMessagesHandler extends MessagesHandler<ClientMessage, ServerMessage>
 implements ClientMessagesProcessor {
-    static private BlockingQueue<ServerMessage> commonQueue = new ArrayBlockingQueue<>(100);
+    static private BlockingQueue<ServerMessage> commonQueue = new ArrayBlockingQueue<>(500);
 
     static private boolean filled = false;
+    volatile private boolean disconnected = false;
+
+    static private ScheduledExecutorService timer = new ScheduledThreadPoolExecutor(1);
 
     private BlockingQueue<ServerMessage> queue = new ArrayBlockingQueue<>(100);
 
@@ -41,7 +43,7 @@ implements ClientMessagesProcessor {
 
     private ClientInfo client;
 
-    final private Object queuesLock = new Object();
+    static final private Object queuesLock = new Object();
 
     static {
         PropertyConfigurator.configure("log4j.properties");
@@ -69,9 +71,10 @@ implements ClientMessagesProcessor {
         logger.info("Garbage was read; closing connection");
     }
 
-        @Override
+    @Override
     protected void handleConnectionBreak() {
         if(client != null && client.isOnline()) {
+            disconnected = true;
             logger.warn("Connection was broken");
             client.setOnline(false);
             synchronized (queuesLock) {
@@ -84,7 +87,6 @@ implements ClientMessagesProcessor {
             }
         }
         logger.info("Closing streams and socket");
-        close();
     }
 
     @Override
@@ -93,6 +95,16 @@ implements ClientMessagesProcessor {
             client.setOnline(false);
         }
         logger.info("Finished reading");
+        if(disconnected) {
+            disconnected = false;
+            timer.schedule(()-> {
+                synchronized (queuesLock) {
+                    if(!client.isOnline()) {
+                        clients.remove(client.getSessionID());
+                    }
+                }
+            },20, TimeUnit.SECONDS);
+        }
     }
 
     @Override
@@ -164,8 +176,8 @@ implements ClientMessagesProcessor {
                     return;
                 }
             }
-            client = new ClientInfo(name,message.getClientName(),this);
             int id = sessionID.getAndIncrement();
+            client = new ClientInfo(name,message.getClientName(),this,id);
             client.setOnline(true);
             clients.put(id,client);
             queue.add(new ServerSuccessLoginMessage(id));
@@ -233,12 +245,6 @@ implements ClientMessagesProcessor {
             }
         }
         logger.info("Handled with logout message from " + name);
-    }
-
-    @Override
-    public void endIt() {
-        super.endIt();
-        close();
     }
 
     @Override
