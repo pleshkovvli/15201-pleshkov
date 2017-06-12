@@ -6,16 +6,34 @@ import ru.nsu.ccfit.pleshkov.lab3.server.Server;
 import java.net.InetAddress;
 
 public class ClientMainTest {
+    final private Object lock = new Object();
+    private boolean xmlFinished = false;
+    private boolean objFinished = false;
+
     @Test
     public void test() throws InterruptedException {
         Server.main(new String[0]);
         Client xml = new Client();
         xml.setGui(new ClientGUI(xml, xml::addChatMessage, xml::addLogoutMessage,
-                xml::addListMessage, xml::endIt));
+                xml::addListMessage, () -> {
+            synchronized (lock) {
+                xml.endIt();
+                xmlFinished = true;
+                lock.notifyAll();
+            }
+
+        }));
         xml.forceLogin(new Config("XML", 2000, InetAddress.getLoopbackAddress(), "xml"));
         Client obj = new Client();
         obj.setGui(new ClientGUI(obj, obj::addChatMessage, obj::addLogoutMessage,
-                obj::addListMessage, obj::endIt));
+                obj::addListMessage, () -> {
+            synchronized (lock) {
+                obj.endIt();
+                objFinished = true;
+                lock.notifyAll();
+            }
+
+        }));
         obj.forceLogin(new Config("OBJ", 3000, InetAddress.getLoopbackAddress(), "objects"));
         Thread.sleep(5000);
         for(int i = 0; i < 1000; ++i) {
@@ -50,6 +68,11 @@ public class ClientMainTest {
         }
         xml.addChatMessage("finish");
         obj.addChatMessage("finish");
-        Thread.sleep(30000);
+        synchronized (lock) {
+            while(!xmlFinished || !objFinished) {
+                lock.wait();
+            }
+        }
+        Thread.sleep(3000);
     }
 }

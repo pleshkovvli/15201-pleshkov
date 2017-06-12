@@ -45,6 +45,10 @@ implements ClientMessagesProcessor {
 
     static final private Object queuesLock = new Object();
 
+    static void finish() {
+        timer.shutdown();
+    }
+
     static {
         PropertyConfigurator.configure("log4j.properties");
         if(!Files.exists(Paths.get(LOG_FILE_NAME))) {

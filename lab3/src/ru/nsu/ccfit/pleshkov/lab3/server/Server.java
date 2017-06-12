@@ -101,6 +101,7 @@ public class Server {
                         System.out.println("ok");
                         xml.interrupt();
                         objects.interrupt();
+                        ServerMessagesHandler.finish();
                         break;
                     } else {
                         System.out.println("Enter \"exit\" to finish");
